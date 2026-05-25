@@ -768,30 +768,20 @@ import { RecipeService } from '@/modules/recipes/services/recipe.service'
 // Composition Root — единственное место, где конкретные реализации
 // связываются с токенами. Всё остальное зависит только от интерфейсов.
 
-function buildContainer(): Container {
-  const container = new Container()
+// Простой модульный синглтон — без globalThis.
+// Контейнер не держит внешних ресурсов (в отличие от DB-пула),
+// поэтому пересоздание при hot reload в dev безвредно.
+export const container = new Container()
 
-  container
-    .bind(RecipeRepositoryToken)
-    .to(RecipeRepository)
-    .inSingletonScope()
+container
+  .bind(RecipeRepositoryToken)
+  .to(RecipeRepository)
+  .inSingletonScope()
 
-  container
-    .bind(RecipeServiceToken)
-    .to(RecipeService)
-    .inSingletonScope()
-
-  return container
-}
-
-// Singleton контейнер — один на весь процесс Next.js (аналогично db client)
-declare global {
-  // eslint-disable-next-line no-var
-  var _container: Container | undefined
-}
-
-export const container = globalThis._container ?? buildContainer()
-if (process.env.NODE_ENV !== 'production') globalThis._container = container
+container
+  .bind(RecipeServiceToken)
+  .to(RecipeService)
+  .inSingletonScope()
 ```
 
 - [ ] **Step 5.7: Напиши тест для RecipeService (TDD)**
