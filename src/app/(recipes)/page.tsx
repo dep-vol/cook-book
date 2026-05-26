@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { container } from '@/lib/container'
+import { container } from '@/container'
 import { RecipeServiceToken } from '@/tokens/recipe.tokens'
 import { RecipeGrid } from '@/modules/recipes/ui/recipe-grid'
 

@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { container } from '@/lib/container'
+import { container } from '@/container'
 import { RecipeServiceToken } from '@/tokens/recipe.tokens'
 
 interface RecipePageProps {

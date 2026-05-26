@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { container } from '@/lib/container'
+import { container } from '@/container'
 import { RecipeServiceToken } from '@/tokens/recipe.tokens'
 import { CreateRecipeSchema, UpdateRecipeSchema } from '@/modules/recipes/transport/recipe.dto'
 
