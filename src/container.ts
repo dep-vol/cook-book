@@ -4,8 +4,6 @@ import { RecipeRepositoryToken, RecipeServiceToken } from '@/tokens/recipe.token
 import { RecipeRepository } from '@/modules/recipes/repositories/recipe.repository'
 import { RecipeService } from '@/modules/recipes/services/recipe.service'
 
-// Composition Root — единственное место, где конкретные реализации
-// связываются с токенами. Всё остальное зависит только от интерфейсов.
 export const container = new Container()
 
 container.bind(RecipeRepositoryToken).to(RecipeRepository).inSingletonScope()

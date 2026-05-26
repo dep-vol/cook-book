@@ -3,7 +3,6 @@ import { container } from '@/container'
 import { RecipeServiceToken } from '@/tokens/recipe.tokens'
 import { RecipeGrid } from '@/modules/recipes/ui/recipe-grid'
 
-// Async Server Component — выполняется на сервере, никакого useEffect или fetch.
 export default async function RecipesPage() {
   const service = container.get(RecipeServiceToken)
   const recipes = await service.getAll()
