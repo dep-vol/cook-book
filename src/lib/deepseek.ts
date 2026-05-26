@@ -24,7 +24,7 @@ export const ParsedRecipeSchema = z.object({
 })
 
 export function extractJson(text: string): unknown {
-  const match = text.match(/```(?:json)?\s*([\s\S]*?)```/s)
+  const match = text.match(/```(?:json)?\s*([\s\S]*?)```/)
   if (match) return JSON.parse(match[1].trim())
   return JSON.parse(text.trim())
 }
