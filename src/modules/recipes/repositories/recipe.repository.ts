@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm'
 import { db } from '@/lib/db'
-import { recipes, type RecipeRow } from '@/lib/db/schema'
+import { recipes, type RecipeRow } from '@/modules/recipes/db/recipe.schema'
 import type { IRecipeRepository } from './recipe.repository.interface'
 import type { RecipeEntity } from '../entities/recipe.entity'
 import type { CreateRecipeDTO, UpdateRecipeDTO } from '../transport/recipe.dto'
