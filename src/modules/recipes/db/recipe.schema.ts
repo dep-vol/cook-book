@@ -29,3 +29,4 @@ export const importJobs = pgTable('import_jobs', {
 
 export type RecipeRow = typeof recipes.$inferSelect
 export type NewRecipeRow = typeof recipes.$inferInsert
+export type ImportJobRow = typeof importJobs.$inferSelect
