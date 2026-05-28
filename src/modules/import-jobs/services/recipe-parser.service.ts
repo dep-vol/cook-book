@@ -1,14 +1,16 @@
-import { injectable } from 'inversify'
+import { inject, injectable } from 'inversify'
 import OpenAI from 'openai'
 import { z } from 'zod'
-import type { IRecipeParser, ParsedRecipe } from '@/modules/import-jobs/services/recipe-parser.interface'
+import type { IRecipeParser, ParsedRecipe } from './recipe-parser.interface'
+import type { ILLMService } from './llm.service.interface'
+import { LLMServiceToken } from '@/tokens/import-job.tokens'
 
 export const ParsedRecipeSchema = z.object({
   title: z.string().min(1),
   ingredients: z.array(
     z.object({
       name: z.string().min(1),
-      amount: z.string().min(1),
+      amount: z.string(),
       unit: z.string(),
     })
   ).min(1),
@@ -29,6 +31,10 @@ export function extractJson(text: string): unknown {
   return JSON.parse(text.trim())
 }
 
+async function encodeImageToBase64(image: string): Promise<string> {
+  return `data:image/jpeg;base64,${image}`;
+}
+
 const SYSTEM_PROMPT = `You are a recipe extraction assistant. Extract recipe information from the user's input and respond with a JSON object only, no markdown. The JSON must follow this exact structure:
 {
   "title": "Recipe name",
@@ -45,19 +51,18 @@ Rules:
 - Respond with valid JSON only. No markdown, no explanations.`
 
 @injectable()
-export class DeepSeekRecipeParser implements IRecipeParser {
-  private readonly client: OpenAI
-
-  constructor() {
-    this.client = new OpenAI({
-      baseURL: 'https://api.deepseek.com',
-      apiKey: process.env.DEEPSEEK_API_KEY!,
-    })
-  }
-
+export class RecipeParser implements IRecipeParser {
+  constructor(
+    @inject(LLMServiceToken) private readonly llmService: ILLMService,
+  ) {}
   async parseText(text: string): Promise<ParsedRecipe> {
-    const response = await this.client.chat.completions.create({
-      model: 'deepseek-chat',
+    const client = new OpenAI({
+      baseURL: this.llmService.getTextGenerationUrl(),
+      apiKey: this.llmService.getTextGenerationApiKey(),
+    })
+
+    const response = await client.chat.completions.create({
+      model: this.llmService.getTextGenerationModel(),
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: text },
@@ -72,17 +77,27 @@ export class DeepSeekRecipeParser implements IRecipeParser {
     return ParsedRecipeSchema.parse(raw)
   }
 
+
   async parsePhoto(base64: string, mimeType: string): Promise<ParsedRecipe> {
-    const response = await this.client.chat.completions.create({
-      model: 'deepseek-chat',
+    const client = new OpenAI({
+      baseURL: this.llmService.getImgGenerationUrl(),
+      apiKey: this.llmService.getImgGenerationApiKey(),
+    });
+
+    const base64Image = await encodeImageToBase64(base64);
+
+    const response = await client.chat.completions.create({
+      model: this.llmService.getImgGenerationModel(),
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         {
           role: 'user',
           content: [
             {
-              type: 'image_url' as const,
-              image_url: { url: `data:${mimeType};base64,${base64}` },
+              type: 'image_url',
+              image_url: {
+                url: base64Image,
+              },
             },
             {
               type: 'text' as const,

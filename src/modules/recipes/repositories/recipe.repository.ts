@@ -4,7 +4,9 @@ import { recipes, type RecipeRow } from '@/modules/recipes/db/recipe.schema'
 import type { IRecipeRepository } from './recipe.repository.interface'
 import type { RecipeEntity } from '../entities/recipe.entity'
 import type { CreateRecipeDTO, UpdateRecipeDTO } from '../transport/recipe.dto'
+import { injectable } from 'inversify'
 
+@injectable()
 export class RecipeRepository implements IRecipeRepository {
   private mapToEntity(row: RecipeRow): RecipeEntity {
     return {

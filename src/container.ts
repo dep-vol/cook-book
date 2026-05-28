@@ -6,12 +6,16 @@ import { RecipeRepository } from '@/modules/recipes/repositories/recipe.reposito
 import { RecipeService } from '@/modules/recipes/services/recipe.service'
 import { ImportJobRepository } from '@/modules/import-jobs/repositories/import-job.repository'
 import { ImportJobService } from '@/modules/import-jobs/services/import-job.service'
-import { DeepSeekRecipeParser } from '@/lib/deepseek'
+import { RecipeParser } from '@/modules/import-jobs/services/recipe-parser.service'
+import { LLMService } from '@/modules/import-jobs/services/llm.service'
+import { LLMServiceToken } from '@/tokens/import-job.tokens'
 
 export const container = new Container()
 
 container.bind(RecipeRepositoryToken).to(RecipeRepository).inSingletonScope()
 container.bind(RecipeServiceToken).to(RecipeService).inSingletonScope()
 container.bind(ImportJobRepositoryToken).to(ImportJobRepository).inSingletonScope()
-container.bind(RecipeParserToken).to(DeepSeekRecipeParser).inSingletonScope()
+container.bind(LLMServiceToken).to(LLMService).inSingletonScope()
+container.bind(RecipeParserToken).to(RecipeParser).inSingletonScope()
 container.bind(ImportJobServiceToken).to(ImportJobService).inSingletonScope()
+

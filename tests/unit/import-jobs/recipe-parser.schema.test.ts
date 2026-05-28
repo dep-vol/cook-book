@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { ParsedRecipeSchema, extractJson } from '@/lib/deepseek'
+import { ParsedRecipeSchema, extractJson } from '@/modules/import-jobs/services/recipe-parser.service'
 
 describe('ParsedRecipeSchema', () => {
   it('validates a correctly structured recipe from LLM', () => {
