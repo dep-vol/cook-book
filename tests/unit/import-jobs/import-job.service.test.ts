@@ -5,6 +5,7 @@ import type { IRecipeService } from '@/modules/recipes/services/recipe.service.i
 import type { IRecipeParser } from '@/modules/import-jobs/services/recipe-parser.interface'
 import type { ImportJobEntity } from '@/modules/import-jobs/entities/import-job.entity'
 import type { RecipeEntity } from '@/modules/recipes/entities/recipe.entity'
+import type { IUrlScraper } from '@/modules/url-scraper/url-scraper.interface'
 
 const pendingJob: ImportJobEntity = {
   id: 'job-1',
@@ -58,12 +59,16 @@ const mockRecipeService: IRecipeService = {
   delete: vi.fn(),
 }
 
+const mockScraper: IUrlScraper = {
+  scrape: vi.fn(),
+}
+
 describe('ImportJobService', () => {
   let service: ImportJobService
 
   beforeEach(() => {
     vi.clearAllMocks()
-    service = new ImportJobService(mockRepo, mockParser, mockRecipeService)
+    service = new ImportJobService(mockRepo, mockParser, mockRecipeService, mockScraper)
   })
 
   it('importFromText: creates job, parses text, creates recipe, updates to done', async () => {
@@ -112,5 +117,51 @@ describe('ImportJobService', () => {
     expect(mockParser.parsePhoto).toHaveBeenCalledWith(expectedBase64, 'image/jpeg')
     expect(result.status).toBe('done')
     expect(result.recipeId).toBe('recipe-1')
+  })
+
+  it('importFromUrl: scrapes url, parses text, creates recipe with sourceUrl, updates to done', async () => {
+    const urlJob: ImportJobEntity = {
+      ...pendingJob,
+      sourceType: 'url',
+      rawInput: 'https://example.com/recipe',
+    }
+    vi.mocked(mockRepo.create).mockResolvedValue(urlJob)
+    vi.mocked(mockScraper.scrape).mockResolvedValue('Рецепт борща со свёклой')
+    vi.mocked(mockParser.parseText).mockResolvedValue(parsedRecipe)
+    vi.mocked(mockRecipeService.create).mockResolvedValue(mockRecipe)
+    vi.mocked(mockRepo.updateStatus).mockResolvedValue(undefined)
+
+    const result = await service.importFromUrl('https://example.com/recipe')
+
+    expect(mockRepo.create).toHaveBeenCalledWith({
+      sourceType: 'url',
+      rawInput: 'https://example.com/recipe',
+    })
+    expect(mockScraper.scrape).toHaveBeenCalledWith('https://example.com/recipe')
+    expect(mockParser.parseText).toHaveBeenCalledWith('Рецепт борща со свёклой')
+    expect(mockRecipeService.create).toHaveBeenCalledWith({
+      ...parsedRecipe,
+      sourceUrl: 'https://example.com/recipe',
+    })
+    expect(mockRepo.updateStatus).toHaveBeenCalledWith('job-1', 'done', { recipeId: 'recipe-1' })
+    expect(result.status).toBe('done')
+    expect(result.recipeId).toBe('recipe-1')
+  })
+
+  it('importFromUrl: updates to failed when scraper throws', async () => {
+    const urlJob: ImportJobEntity = {
+      ...pendingJob,
+      sourceType: 'url',
+      rawInput: 'https://example.com/recipe',
+    }
+    vi.mocked(mockRepo.create).mockResolvedValue(urlJob)
+    vi.mocked(mockRepo.updateStatus).mockResolvedValue(undefined)
+    vi.mocked(mockScraper.scrape).mockRejectedValue(new Error('HTTP 403'))
+
+    const result = await service.importFromUrl('https://example.com/recipe')
+
+    expect(mockRepo.updateStatus).toHaveBeenCalledWith('job-1', 'failed', { error: 'HTTP 403' })
+    expect(result.status).toBe('failed')
+    expect(result.error).toBe('HTTP 403')
   })
 })
