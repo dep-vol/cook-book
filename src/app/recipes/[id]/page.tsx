@@ -1,5 +1,4 @@
 import { notFound } from 'next/navigation'
-import Link from 'next/link'
 import { container } from '@/container'
 import { RecipeServiceToken } from '@/tokens/recipe.tokens'
 import { getImageUrl } from '@/lib/minio'
@@ -30,11 +29,8 @@ export default async function RecipePage({ params }: RecipePageProps) {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <div className="flex justify-between items-start mb-6">
+      <div className="mb-6">
         <h1 className="text-3xl font-bold">{recipe.title}</h1>
-        <Link href={`/recipes/${id}/edit`} className="text-sm text-gray-500 hover:underline">
-          Редактировать
-        </Link>
       </div>
 
       {imageUrl && (

@@ -29,6 +29,7 @@ export async function createRecipeAction(formData: unknown) {
 
   revalidatePath('/')
   revalidatePath('/recipes')
+  revalidatePath('/admin')
   return { data: recipe }
 }
 
@@ -43,6 +44,7 @@ export async function updateRecipeAction(id: string, formData: unknown) {
 
   revalidatePath('/')
   revalidatePath(`/recipes/${id}`)
+  revalidatePath('/admin')
   return { data: recipe }
 }
 
@@ -52,4 +54,5 @@ export async function deleteRecipeAction(id: string) {
 
   revalidatePath('/')
   revalidatePath('/recipes')
+  revalidatePath('/admin')
 }
