@@ -1,6 +1,6 @@
 'use server'
 
-import { timingSafeEqual } from 'crypto'
+import { createHash, timingSafeEqual } from 'crypto'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createSessionToken } from '@/lib/session'
@@ -9,20 +9,14 @@ export async function loginAction(password: string): Promise<{ error: string } |
   const adminPassword = process.env.ADMIN_PASSWORD
   if (!adminPassword) return { error: 'Ошибка конфигурации сервера' }
 
-  let valid = false
-  try {
-    const a = Buffer.from(password)
-    const b = Buffer.from(adminPassword)
-    if (a.length === b.length) valid = timingSafeEqual(a, b)
-  } catch {
-    valid = false
-  }
+  const hashOf = (s: string) => createHash('sha256').update(s).digest()
+  const valid = timingSafeEqual(hashOf(password), hashOf(adminPassword))
 
   if (!valid) return { error: 'Неверный пароль' }
 
   const token = await createSessionToken()
   const cookieStore = await cookies()
-  cookieStore.set('session', token, { httpOnly: true, path: '/', sameSite: 'lax' })
+  cookieStore.set('session', token, { httpOnly: true, path: '/', sameSite: 'lax', secure: process.env.NODE_ENV === 'production' })
   return { success: true }
 }
 
