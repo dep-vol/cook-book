@@ -16,7 +16,13 @@ export async function loginAction(password: string): Promise<{ error: string } |
 
   const token = await createSessionToken()
   const cookieStore = await cookies()
-  cookieStore.set('session', token, { httpOnly: true, path: '/', sameSite: 'lax', secure: process.env.NODE_ENV === 'production' })
+  cookieStore.set('session', token, {
+    httpOnly: true,
+    path: '/',
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 60 * 60 * 24 * 7,
+  })
   return { success: true }
 }
 

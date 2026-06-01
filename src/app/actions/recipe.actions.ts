@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { container } from '@/container'
 import { RecipeServiceToken } from '@/tokens/recipe.tokens'
 import { CreateRecipeSchema, UpdateRecipeSchema } from '@/modules/recipes/transport/recipe.dto'
+import { requireAdmin } from '@/lib/require-admin'
 
 // Server Actions — TransferLayer.
 // Zod-валидация на входе, DTO не покидает этот файл.
@@ -19,6 +20,7 @@ export async function getRecipeByIdAction(id: string) {
 }
 
 export async function createRecipeAction(formData: unknown) {
+  await requireAdmin()
   const parsed = CreateRecipeSchema.safeParse(formData)
   if (!parsed.success) {
     return { error: parsed.error.flatten() }
@@ -34,6 +36,7 @@ export async function createRecipeAction(formData: unknown) {
 }
 
 export async function updateRecipeAction(id: string, formData: unknown) {
+  await requireAdmin()
   const parsed = UpdateRecipeSchema.safeParse(formData)
   if (!parsed.success) {
     return { error: parsed.error.flatten() }
@@ -49,6 +52,7 @@ export async function updateRecipeAction(id: string, formData: unknown) {
 }
 
 export async function deleteRecipeAction(id: string) {
+  await requireAdmin()
   const service = container.get(RecipeServiceToken)
   await service.delete(id)
 
