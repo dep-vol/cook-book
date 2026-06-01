@@ -19,11 +19,14 @@ export default function AdminEditRecipePage({ params }: Props) {
   const router = useRouter()
   const [id, setId] = useState<string | null>(null)
   const [recipe, setRecipe] = useState<RecipeEntity | null>(null)
+  const [loadError, setLoadError] = useState<string | null>(null)
 
   useEffect(() => {
     params.then(p => {
       setId(p.id)
-      getRecipeByIdAction(p.id).then(setRecipe)
+      getRecipeByIdAction(p.id)
+        .then(setRecipe)
+        .catch(() => setLoadError('Рецепт не найден'))
     })
   }, [params])
 
@@ -40,6 +43,7 @@ export default function AdminEditRecipePage({ params }: Props) {
     router.push('/admin')
   }
 
+  if (loadError) return <div className="text-red-400 py-8">{loadError}</div>
   if (!recipe) return <div className="text-gray-400 py-8">Загрузка...</div>
 
   return (
@@ -63,6 +67,7 @@ export default function AdminEditRecipePage({ params }: Props) {
           servings: recipe.servings ?? undefined,
           tags: recipe.tags,
           sourceUrl: recipe.sourceUrl ?? undefined,
+          imageKey: recipe.imageKey ?? undefined,
         }}
       />
     </div>
