@@ -22,6 +22,7 @@ export const CreateRecipeSchema = z.object({
   servings: z.number().int().positive().nullable(),
   tags: z.array(z.string()).default([]),
   sourceUrl: z.string().url().nullable().optional(),
+  imageKey: z.string().nullable().optional(),
 })
 
 export const UpdateRecipeSchema = CreateRecipeSchema.partial()

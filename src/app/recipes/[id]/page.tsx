@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { container } from '@/container'
 import { RecipeServiceToken } from '@/tokens/recipe.tokens'
+import { getImageUrl } from '@/lib/minio'
 
 interface RecipePageProps {
   params: Promise<{ id: string }>
@@ -18,6 +19,15 @@ export default async function RecipePage({ params }: RecipePageProps) {
     notFound()
   }
 
+  let imageUrl: string | null = null
+  if (recipe.imageKey) {
+    try {
+      imageUrl = await getImageUrl(recipe.imageKey)
+    } catch {
+      // MinIO unavailable — render page without image
+    }
+  }
+
   return (
     <div className="max-w-2xl mx-auto">
       <div className="flex justify-between items-start mb-6">
@@ -26,6 +36,11 @@ export default async function RecipePage({ params }: RecipePageProps) {
           Редактировать
         </Link>
       </div>
+
+      {imageUrl && (
+        <img src={imageUrl} alt={recipe.title}
+          className="w-full rounded-lg object-cover max-h-80 mb-6" />
+      )}
 
       <div className="flex gap-4 text-sm text-gray-500 mb-6">
         {recipe.cookTimeMinutes && <span>⏱ {recipe.cookTimeMinutes} мин</span>}

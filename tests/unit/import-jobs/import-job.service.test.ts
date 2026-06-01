@@ -7,6 +7,12 @@ import type { ImportJobEntity } from '@/modules/import-jobs/entities/import-job.
 import type { RecipeEntity } from '@/modules/recipes/entities/recipe.entity'
 import type { IUrlScraper } from '@/modules/url-scraper/url-scraper.interface'
 
+vi.mock('@/lib/minio', () => ({ uploadImage: vi.fn() }))
+import { uploadImage } from '@/lib/minio'
+
+const mockFetch = vi.fn()
+vi.stubGlobal('fetch', mockFetch)
+
 const pendingJob: ImportJobEntity = {
   id: 'job-1',
   status: 'pending',
@@ -119,33 +125,86 @@ describe('ImportJobService', () => {
     expect(result.recipeId).toBe('recipe-1')
   })
 
-  it('importFromUrl: scrapes url, parses text, creates recipe with sourceUrl, updates to done', async () => {
+  it('importFromTextWithPhoto: parses text, uploads photo, creates recipe with imageKey', async () => {
+    const photoJob: ImportJobEntity = { ...pendingJob, sourceType: 'photo', rawInput: 'Рецепт борща' }
+    vi.mocked(mockRepo.create).mockResolvedValue(photoJob)
+    vi.mocked(mockParser.parseText).mockResolvedValue(parsedRecipe)
+    vi.mocked(mockRecipeService.create).mockResolvedValue(mockRecipe)
+    vi.mocked(mockRepo.updateStatus).mockResolvedValue(undefined)
+    vi.mocked(uploadImage).mockResolvedValue('recipes/photo-123')
+
+    const buffer = Buffer.from('fake-photo')
+    const result = await service.importFromTextWithPhoto('Рецепт борща', buffer, 'image/jpeg')
+
+    expect(mockRepo.create).toHaveBeenCalledWith({ sourceType: 'photo', rawInput: 'Рецепт борща' })
+    expect(mockParser.parseText).toHaveBeenCalledWith('Рецепт борща')
+    expect(uploadImage).toHaveBeenCalledWith(buffer, 'image/jpeg')
+    expect(mockRecipeService.create).toHaveBeenCalledWith({
+      ...parsedRecipe,
+      sourceUrl: null,
+      imageKey: 'recipes/photo-123',
+    })
+    expect(result.status).toBe('done')
+    expect(result.recipeId).toBe('recipe-1')
+  })
+
+  it('importFromUrl: scrapes url, parses text, creates recipe with sourceUrl and imageKey null when no imageUrl', async () => {
     const urlJob: ImportJobEntity = {
       ...pendingJob,
       sourceType: 'url',
       rawInput: 'https://example.com/recipe',
     }
     vi.mocked(mockRepo.create).mockResolvedValue(urlJob)
-    vi.mocked(mockScraper.scrape).mockResolvedValue('Рецепт борща со свёклой')
+    vi.mocked(mockScraper.scrape).mockResolvedValue({ text: 'Рецепт борща со свёклой' })
     vi.mocked(mockParser.parseText).mockResolvedValue(parsedRecipe)
     vi.mocked(mockRecipeService.create).mockResolvedValue(mockRecipe)
     vi.mocked(mockRepo.updateStatus).mockResolvedValue(undefined)
 
     const result = await service.importFromUrl('https://example.com/recipe')
 
-    expect(mockRepo.create).toHaveBeenCalledWith({
-      sourceType: 'url',
-      rawInput: 'https://example.com/recipe',
-    })
     expect(mockScraper.scrape).toHaveBeenCalledWith('https://example.com/recipe')
     expect(mockParser.parseText).toHaveBeenCalledWith('Рецепт борща со свёклой')
     expect(mockRecipeService.create).toHaveBeenCalledWith({
       ...parsedRecipe,
       sourceUrl: 'https://example.com/recipe',
+      imageKey: null,
     })
-    expect(mockRepo.updateStatus).toHaveBeenCalledWith('job-1', 'done', { recipeId: 'recipe-1' })
+    expect(uploadImage).not.toHaveBeenCalled()
     expect(result.status).toBe('done')
     expect(result.recipeId).toBe('recipe-1')
+  })
+
+  it('importFromUrl: downloads og:image, uploads to MinIO, passes imageKey to create', async () => {
+    const urlJob: ImportJobEntity = {
+      ...pendingJob,
+      sourceType: 'url',
+      rawInput: 'https://example.com/recipe',
+    }
+    vi.mocked(mockRepo.create).mockResolvedValue(urlJob)
+    vi.mocked(mockScraper.scrape).mockResolvedValue({
+      text: 'Рецепт борща со свёклой',
+      imageUrl: 'https://example.com/recipe.jpg',
+    })
+    vi.mocked(mockParser.parseText).mockResolvedValue(parsedRecipe)
+    vi.mocked(mockRecipeService.create).mockResolvedValue(mockRecipe)
+    vi.mocked(mockRepo.updateStatus).mockResolvedValue(undefined)
+    mockFetch.mockResolvedValue({
+      ok: true,
+      headers: { get: () => 'image/jpeg' },
+      arrayBuffer: async () => new ArrayBuffer(8),
+    })
+    vi.mocked(uploadImage).mockResolvedValue('recipes/abc-123')
+
+    const result = await service.importFromUrl('https://example.com/recipe')
+
+    expect(mockFetch).toHaveBeenCalledWith('https://example.com/recipe.jpg')
+    expect(uploadImage).toHaveBeenCalledWith(expect.any(Buffer), 'image/jpeg')
+    expect(mockRecipeService.create).toHaveBeenCalledWith({
+      ...parsedRecipe,
+      sourceUrl: 'https://example.com/recipe',
+      imageKey: 'recipes/abc-123',
+    })
+    expect(result.status).toBe('done')
   })
 
   it('importFromUrl: updates to failed when scraper throws', async () => {

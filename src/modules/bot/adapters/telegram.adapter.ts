@@ -29,7 +29,7 @@ export class TelegramAdapter implements IBotAdapter {
     })
   }
 
-  onPhoto(handler: (buffer: Buffer, mimeType: string) => Promise<string>): void {
+  onPhoto(handler: (buffer: Buffer, mimeType: string, caption?: string) => Promise<string>): void {
     this.bot.on('message:photo', async ctx => {
       await ctx.reply('⏳ Скачиваю фото и обрабатываю...')
       try {
@@ -40,8 +40,9 @@ export class TelegramAdapter implements IBotAdapter {
         const response = await fetch(fileUrl)
         if (!response.ok) throw new Error(`Failed to download photo: ${response.status}`)
         const buffer = Buffer.from(await response.arrayBuffer())
+        const caption = ctx.message.caption?.trim() || undefined
 
-        await ctx.reply(await handler(buffer, 'image/jpeg'))
+        await ctx.reply(await handler(buffer, 'image/jpeg', caption))
       } catch (err) {
         await ctx.reply('❌ Внутренняя ошибка. Попробуй ещё раз.')
         console.error('Error in onPhoto handler:', err)

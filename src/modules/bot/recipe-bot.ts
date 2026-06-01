@@ -46,14 +46,16 @@ export class RecipeBot {
       )
     })
 
-    this.adapter.onPhoto(async (buffer, mimeType) => {
-      const result = await this.service.importFromPhoto(buffer, mimeType)
+    this.adapter.onPhoto(async (buffer, mimeType, caption) => {
+      const result = caption
+        ? await this.service.importFromTextWithPhoto(caption, buffer, mimeType)
+        : await this.service.importFromPhoto(buffer, mimeType)
       if (result.status === 'done' && result.recipeId) {
         return `✅ Рецепт сохранён!\n${this.webUrl}/recipes/${result.recipeId}`
       }
       return (
         `❌ Не удалось распознать рецепт из фото: ${result.error ?? 'неизвестная ошибка'}\n\n` +
-        'Попробуй описать рецепт текстом.'
+        'Попробуй описать рецепт текстом или добавь подпись к фото.'
       )
     })
 

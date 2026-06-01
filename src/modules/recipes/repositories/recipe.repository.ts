@@ -45,6 +45,7 @@ export class RecipeRepository implements IRecipeRepository {
         servings: data.servings ?? null,
         tags: data.tags,
         sourceUrl: data.sourceUrl ?? null,
+        imageKey: data.imageKey ?? null,
       })
       .returning()
     return this.mapToEntity(rows[0])

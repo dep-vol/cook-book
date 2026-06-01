@@ -2,6 +2,7 @@ import { injectable, inject } from 'inversify'
 import { ImportJobRepositoryToken, RecipeParserToken } from '@/tokens/import-job.tokens'
 import { RecipeServiceToken } from '@/tokens/recipe.tokens'
 import { UrlScraperToken } from '@/tokens/url-scraper.tokens'
+import { uploadImage } from '@/lib/minio'
 import type { IImportJobRepository } from '../repositories/import-job.repository.interface'
 import type { IRecipeParser } from './recipe-parser.interface'
 import type { IRecipeService } from '@/modules/recipes/services/recipe.service.interface'
@@ -49,13 +50,42 @@ export class ImportJobService implements IImportJobService {
     }
   }
 
+  async importFromTextWithPhoto(text: string, photoBuffer: Buffer, mimeType: string): Promise<ImportJobEntity> {
+    const job = await this.repo.create({ sourceType: 'photo', rawInput: text })
+    try {
+      await this.repo.updateStatus(job.id, 'processing')
+      const [parsed, imageKey] = await Promise.all([
+        this.parser.parseText(text),
+        uploadImage(photoBuffer, mimeType),
+      ])
+      const recipe = await this.recipeService.create({ ...parsed, sourceUrl: null, imageKey })
+      await this.repo.updateStatus(job.id, 'done', { recipeId: recipe.id })
+      return { ...job, status: 'done', recipeId: recipe.id }
+    } catch (err) {
+      const error = err instanceof Error ? err.message : 'Unknown error'
+      await this.repo.updateStatus(job.id, 'failed', { error })
+      return { ...job, status: 'failed', error }
+    }
+  }
+
   async importFromUrl(url: string): Promise<ImportJobEntity> {
     const job = await this.repo.create({ sourceType: 'url', rawInput: url })
     try {
       await this.repo.updateStatus(job.id, 'processing')
-      const text = await this.scraper.scrape(url)
+      const { text, imageUrl } = await this.scraper.scrape(url)
       const parsed = await this.parser.parseText(text)
-      const recipe = await this.recipeService.create({ ...parsed, sourceUrl: url })
+
+      let imageKey: string | null = null
+      if (imageUrl) {
+        const imgRes = await fetch(imageUrl)
+        if (imgRes.ok) {
+          const buffer = Buffer.from(await imgRes.arrayBuffer())
+          const mimeType = imgRes.headers.get('content-type') ?? 'image/jpeg'
+          imageKey = await uploadImage(buffer, mimeType)
+        }
+      }
+
+      const recipe = await this.recipeService.create({ ...parsed, sourceUrl: url, imageKey })
       await this.repo.updateStatus(job.id, 'done', { recipeId: recipe.id })
       return { ...job, status: 'done', recipeId: recipe.id }
     } catch (err) {

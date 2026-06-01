@@ -10,8 +10,8 @@ export const ParsedRecipeSchema = z.object({
   ingredients: z.array(
     z.object({
       name: z.string().min(1),
-      amount: z.string(),
-      unit: z.string(),
+      amount: z.string().nullable().transform(v => v ?? ''),
+      unit: z.string().nullable().transform(v => v ?? ''),
     })
   ).min(1),
   steps: z.array(
