@@ -6,9 +6,6 @@ import { RecipeServiceToken } from '@/tokens/recipe.tokens'
 import { CreateRecipeSchema, UpdateRecipeSchema } from '@/modules/recipes/transport/recipe.dto'
 import { requireAdmin } from '@/lib/require-admin'
 
-// Server Actions — TransferLayer.
-// Zod-валидация на входе, DTO не покидает этот файл.
-
 export async function getRecipesAction() {
   const service = container.get(RecipeServiceToken)
   return service.getAll()
@@ -55,6 +52,16 @@ export async function deleteRecipeAction(id: string) {
   await requireAdmin()
   const service = container.get(RecipeServiceToken)
   await service.delete(id)
+
+  revalidatePath('/')
+  revalidatePath('/recipes')
+  revalidatePath('/admin')
+}
+
+export async function deleteSeveralRecipesAction(ids: string[]) {
+  await requireAdmin()
+  const service = container.get(RecipeServiceToken)
+  await service.deleteSeveral(ids)
 
   revalidatePath('/')
   revalidatePath('/recipes')

@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm'
+import { eq, inArray } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { recipes, type RecipeRow } from '@/modules/recipes/db/recipe.schema'
 import type { IRecipeRepository } from './recipe.repository.interface'
@@ -68,5 +68,9 @@ export class RecipeRepository implements IRecipeRepository {
 
   async delete(id: string): Promise<void> {
     await db.delete(recipes).where(eq(recipes.id, id))
+  }
+
+  async deleteSeveral(ids: string[]): Promise<void> {
+    await db.delete(recipes).where(inArray(recipes.id, ids))
   }
 }

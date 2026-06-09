@@ -7,4 +7,5 @@ export interface IRecipeRepository {
   create(data: CreateRecipeDTO): Promise<RecipeEntity>
   update(id: string, data: UpdateRecipeDTO): Promise<RecipeEntity | null>
   delete(id: string): Promise<void>
+  deleteSeveral(ids: string[]): Promise<void>
 }

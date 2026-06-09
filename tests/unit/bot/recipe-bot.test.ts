@@ -33,6 +33,7 @@ const mockAdapter: IBotAdapter = {
 const mockService: IImportJobService = {
   importFromText: vi.fn(),
   importFromPhoto: vi.fn(),
+  importFromTextWithPhoto: vi.fn(),
   importFromUrl: vi.fn(),
 }
 

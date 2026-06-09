@@ -63,6 +63,7 @@ const mockRecipeService: IRecipeService = {
   create: vi.fn(),
   update: vi.fn(),
   delete: vi.fn(),
+  deleteSeveral: vi.fn(),
 }
 
 const mockScraper: IUrlScraper = {
