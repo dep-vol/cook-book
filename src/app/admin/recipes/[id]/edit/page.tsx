@@ -7,7 +7,7 @@ import {
   getRecipeByIdAction,
   updateRecipeAction,
   deleteRecipeAction,
-} from '@/app/actions/recipe.actions'
+} from '@/modules/recipes/transport/recipe.actions'
 import type { RecipeEntity } from '@/modules/recipes/entities/recipe.entity'
 import type { CreateRecipeDTO } from '@/modules/recipes/transport/recipe.dto'
 

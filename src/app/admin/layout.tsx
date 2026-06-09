@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { logoutAction } from '@/app/actions/auth.actions'
+import { logoutAction } from '@/modules/auth/transport/auth.actions'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (

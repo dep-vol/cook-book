@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { deleteRecipeAction } from '@/app/actions/recipe.actions'
+import { deleteRecipeAction } from '@/modules/recipes/transport/recipe.actions'
 
 export function DeleteButton({ id }: { id: string }) {
   const router = useRouter()

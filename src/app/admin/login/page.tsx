@@ -1,30 +1,14 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { loginAction } from '@/app/actions/auth.actions'
+import { useActionState } from 'react'
+import { loginAction } from '@/modules/auth/transport/auth.actions'
+
+const initialState = {
+  error: null,
+}
 
 export default function LoginPage() {
-  const router = useRouter()
-  const [error, setError] = useState<string | null>(null)
-  const [pending, setPending] = useState(false)
-
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    setError(null)
-    setPending(true)
-    const password = (e.currentTarget.elements.namedItem('password') as HTMLInputElement).value
-    try {
-      const result = await loginAction(password)
-      if ('error' in result) {
-        setError(result.error)
-      } else {
-        router.push('/admin')
-      }
-    } finally {
-      setPending(false)
-    }
-  }
+  const [state, formAction, pending] = useActionState(loginAction, initialState)
 
   return (
     <div className="min-h-screen flex items-center justify-center">
@@ -34,7 +18,7 @@ export default function LoginPage() {
           <h1 className="text-xl font-semibold">Cook Book</h1>
           <p className="text-sm text-gray-400 mt-1">Вход для администратора</p>
         </div>
-        <form onSubmit={handleSubmit} className="bg-gray-800 rounded-lg p-6">
+        <form action={formAction} className="bg-gray-800 rounded-lg p-6">
           <div className="mb-4">
             <label className="block text-xs text-gray-400 uppercase tracking-wide mb-2">
               Пароль
@@ -55,9 +39,9 @@ export default function LoginPage() {
           >
             {pending ? 'Вхожу...' : 'Войти'}
           </button>
-          {error && (
+          {state.error && (
             <div className="mt-3 text-xs text-red-400 text-center border border-red-800 rounded px-3 py-2 bg-red-950/20">
-              {error}
+              {state.error}
             </div>
           )}
         </form>

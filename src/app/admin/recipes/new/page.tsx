@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { RecipeForm } from '@/modules/recipes/ui/recipe-form'
-import { createRecipeAction } from '@/app/actions/recipe.actions'
+import { createRecipeAction } from '@/modules/recipes/transport/recipe.actions'
 import type { CreateRecipeDTO } from '@/modules/recipes/transport/recipe.dto'
 
 export default function AdminNewRecipePage() {

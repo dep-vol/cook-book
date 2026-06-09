@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { getRecipesAction } from '@/app/actions/recipe.actions'
+import { getRecipesAction } from '@/modules/recipes/transport/recipe.actions'
 import { DeleteButton } from './_components/delete-button'
 
 export default async function AdminPage() {
