@@ -129,6 +129,17 @@ export class RecipeBot {
               [{ text: 'Вернуться к черновику', data: `draft:back:${id}` }],
             ],
           }
+        case 'confirm_save':
+          return {
+            text: 'Подтверждение сохранения будет доступно на следующем шаге.',
+            buttons: this.renderDraftMenuButtons(id),
+          }
+        case 'back':
+          await this.draftService.setEditing(id)
+          return {
+            text: 'Возвращаюсь к черновику.',
+            buttons: this.renderDraftMenuButtons(id),
+          }
         default:
           return this.renderUnknownCallback()
       }

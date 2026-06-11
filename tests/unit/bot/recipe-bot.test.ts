@@ -148,4 +148,25 @@ describe('RecipeBot URL detection', () => {
       { text: 'Спросить ИИ', data: 'draft:ask_ai:draft-1' },
     ]))
   })
+
+  it('moves draft to confirmation state and handles confirm/back callbacks', async () => {
+    vi.mocked(mockDraftService.setConfirming).mockResolvedValue(draft)
+    vi.mocked(mockDraftService.setEditing).mockResolvedValue(draft)
+
+    const confirm = await capturedCallbackHandler!('draft:save:draft-1', { chatId: 'chat-1', userId: 'user-1' })
+
+    expect(mockDraftService.setConfirming).toHaveBeenCalledWith('draft-1')
+    expect(confirm.text).toContain('Проверь черновик')
+    expect(confirm.buttons?.flat()).toEqual(expect.arrayContaining([
+      { text: 'Подтвердить сохранение', data: 'draft:confirm_save:draft-1' },
+      { text: 'Вернуться к черновику', data: 'draft:back:draft-1' },
+    ]))
+
+    const confirmSave = await capturedCallbackHandler!('draft:confirm_save:draft-1', { chatId: 'chat-1', userId: 'user-1' })
+    expect(confirmSave.text).toContain('Подтверждение сохранения')
+
+    const back = await capturedCallbackHandler!('draft:back:draft-1', { chatId: 'chat-1', userId: 'user-1' })
+    expect(mockDraftService.setEditing).toHaveBeenCalledWith('draft-1')
+    expect(back.text).toContain('Возвращаюсь')
+  })
 })
