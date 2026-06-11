@@ -1,5 +1,5 @@
 import { Bot } from 'grammy'
-import type { IBotAdapter } from '../bot-adapter.interface'
+import type { BotResponse, IBotAdapter } from '../bot-adapter.interface'
 
 export class TelegramAdapter implements IBotAdapter {
   private readonly bot: Bot
@@ -13,8 +13,11 @@ export class TelegramAdapter implements IBotAdapter {
     this.bot.catch(err => console.error('Unhandled bot error:', err))
   }
 
-  onStart(handler: () => string): void {
-    this.bot.command('start', ctx => ctx.reply(handler()))
+  onStart(handler: () => BotResponse): void {
+    this.bot.command('start', ctx => {
+      const response = handler()
+      return ctx.reply(response.text, this.toReplyOptions(response))
+    })
   }
 
   onText(handler: (text: string) => Promise<string>): void {
@@ -50,8 +53,42 @@ export class TelegramAdapter implements IBotAdapter {
     })
   }
 
+  onCallback(handler: (data: string, context: { chatId: string; userId: string }) => Promise<BotResponse>): void {
+    this.bot.on('callback_query:data', async ctx => {
+      try {
+        await ctx.answerCallbackQuery()
+        const chatId = ctx.chat?.id ?? ctx.callbackQuery.message?.chat.id
+        if (!chatId) {
+          await ctx.reply('❌ Не удалось определить чат. Попробуй ещё раз.')
+          return
+        }
+
+        const response = await handler(ctx.callbackQuery.data, {
+          chatId: String(chatId),
+          userId: String(ctx.from.id),
+        })
+        await ctx.reply(response.text, this.toReplyOptions(response))
+      } catch (err) {
+        await ctx.reply('❌ Внутренняя ошибка. Попробуй ещё раз.')
+        console.error('Error in onCallback handler:', err)
+      }
+    })
+  }
+
   start(): void {
     const webUrl = process.env.WEB_URL ?? 'http://localhost:3000'
     this.bot.start({ onStart: () => console.log(`Bot started (long polling). Web: ${webUrl}`) })
+  }
+
+  private toReplyOptions(response: BotResponse) {
+    if (!response.buttons?.length) return undefined
+
+    return {
+      reply_markup: {
+        inline_keyboard: response.buttons.map(row =>
+          row.map(button => ({ text: button.text, callback_data: button.data }))
+        ),
+      },
+    }
   }
 }
