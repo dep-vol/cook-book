@@ -15,6 +15,13 @@
       "when": 1781181996674,
       "tag": "0001_tiresome_groot",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781182889466,
+      "tag": "0002_charming_paladin",
+      "breakpoints": true
     }
   ]
 }
