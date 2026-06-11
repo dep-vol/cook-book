@@ -21,6 +21,7 @@ export interface RecipeEntity {
   tags: string[]
   sourceUrl: string | null
   imageKey: string | null
+  videoUrl: string | null
   createdAt: Date
   updatedAt: Date
 }

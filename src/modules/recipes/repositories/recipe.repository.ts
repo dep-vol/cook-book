@@ -19,6 +19,7 @@ export class RecipeRepository implements IRecipeRepository {
       tags: row.tags,
       sourceUrl: row.sourceUrl,
       imageKey: row.imageKey,
+      videoUrl: row.videoUrl,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     }
@@ -46,6 +47,7 @@ export class RecipeRepository implements IRecipeRepository {
         tags: data.tags,
         sourceUrl: data.sourceUrl ?? null,
         imageKey: data.imageKey ?? null,
+        videoUrl: data.videoUrl ?? null,
       })
       .returning()
     return this.mapToEntity(rows[0])
@@ -60,6 +62,7 @@ export class RecipeRepository implements IRecipeRepository {
     if (data.servings !== undefined) updateData.servings = data.servings
     if (data.tags !== undefined) updateData.tags = data.tags
     if (data.sourceUrl !== undefined) updateData.sourceUrl = data.sourceUrl ?? null
+    if (data.videoUrl !== undefined) updateData.videoUrl = data.videoUrl ?? null
     updateData.updatedAt = new Date()
 
     const rows = await db.update(recipes).set(updateData).where(eq(recipes.id, id)).returning()

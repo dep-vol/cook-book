@@ -83,6 +83,13 @@ export default async function RecipePage({ params }: RecipePageProps) {
           Источник →
         </a>
       )}
+
+      {recipe.videoUrl && (
+        <a href={recipe.videoUrl} target="_blank" rel="noreferrer"
+          className="mt-2 block text-sm text-blue-500 hover:underline">
+          Видео →
+        </a>
+      )}
     </div>
   )
 }

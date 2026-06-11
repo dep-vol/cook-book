@@ -13,6 +13,7 @@ export const recipes = pgTable('recipes', {
   tags: text('tags').array().notNull().default([]),
   sourceUrl: text('source_url'),
   imageKey: text('image_key'),
+  videoUrl: text('video_url'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })

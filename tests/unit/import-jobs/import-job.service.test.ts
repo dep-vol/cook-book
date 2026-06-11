@@ -33,6 +33,7 @@ const mockRecipe: RecipeEntity = {
   tags: ['суп'],
   sourceUrl: null,
   imageKey: null,
+  videoUrl: null,
   createdAt: new Date('2026-01-01'),
   updatedAt: new Date('2026-01-01'),
 }

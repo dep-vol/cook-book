@@ -23,6 +23,7 @@ export const CreateRecipeSchema = z.object({
   tags: z.array(z.string()).default([]),
   sourceUrl: z.string().url().nullable().optional(),
   imageKey: z.string().nullable().optional(),
+  videoUrl: z.string().nullable().optional(),
 })
 
 export const UpdateRecipeSchema = CreateRecipeSchema.partial()
