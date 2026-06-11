@@ -1,13 +1,17 @@
 import { inject, injectable } from 'inversify'
 import { RecipeDraftRepositoryToken } from '@/tokens/recipe-draft.tokens'
+import { RecipeServiceToken } from '@/tokens/recipe.tokens'
 import type { IRecipeDraftRepository } from '../repositories/recipe-draft.repository.interface'
 import type { IRecipeDraftService } from './recipe-draft.service.interface'
 import type { RecipeDraftEntity, RecipeDraftSourceType } from '../entities/recipe-draft.entity'
+import type { IRecipeService } from '@/modules/recipes/services/recipe.service.interface'
+import type { RecipeEntity } from '@/modules/recipes/entities/recipe.entity'
 
 @injectable()
 export class RecipeDraftService implements IRecipeDraftService {
   constructor(
-    @inject(RecipeDraftRepositoryToken) private readonly repo: IRecipeDraftRepository
+    @inject(RecipeDraftRepositoryToken) private readonly repo: IRecipeDraftRepository,
+    @inject(RecipeServiceToken) private readonly recipeService: IRecipeService,
   ) {}
 
   async createDraft(input: {
@@ -46,6 +50,32 @@ export class RecipeDraftService implements IRecipeDraftService {
 
   async setConfirming(id: string): Promise<RecipeDraftEntity> {
     return this.repo.update(id, { state: 'confirming' })
+  }
+
+  async saveDraft(id: string): Promise<RecipeEntity> {
+    const draft = await this.repo.findById(id)
+    if (!draft) {
+      throw new Error(`Recipe draft not found: ${id}`)
+    }
+
+    if (!draft.title || draft.title.trim().length === 0 || draft.ingredients.length === 0 || draft.steps.length === 0) {
+      throw new Error('Draft is incomplete')
+    }
+
+    const recipe = await this.recipeService.create({
+      title: draft.title,
+      ingredients: draft.ingredients,
+      steps: draft.steps,
+      cookTimeMinutes: draft.cookTimeMinutes,
+      servings: draft.servings,
+      tags: draft.tags,
+      sourceUrl: draft.sourceUrl,
+      imageKey: draft.coverImageKey,
+      videoUrl: draft.videoUrl,
+    })
+
+    await this.repo.markSaved(id, recipe.id)
+    return recipe
   }
 
   async markSaved(id: string, recipeId: string): Promise<RecipeDraftEntity> {

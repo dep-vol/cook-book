@@ -1,4 +1,5 @@
 import type { RecipeDraftEntity, RecipeDraftSourceType } from '../entities/recipe-draft.entity'
+import type { RecipeEntity } from '@/modules/recipes/entities/recipe.entity'
 
 export interface IRecipeDraftService {
   createDraft(input: {
@@ -12,6 +13,7 @@ export interface IRecipeDraftService {
   attachVideoUrl(id: string, videoUrl: string): Promise<RecipeDraftEntity>
   setEditing(id: string): Promise<RecipeDraftEntity>
   setConfirming(id: string): Promise<RecipeDraftEntity>
+  saveDraft(id: string): Promise<RecipeEntity>
   markSaved(id: string, recipeId: string): Promise<RecipeDraftEntity>
   discardDraft(id: string): Promise<void>
 }

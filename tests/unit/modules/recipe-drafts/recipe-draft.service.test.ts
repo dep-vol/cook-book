@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { RecipeDraftService } from '@/modules/recipe-drafts/services/recipe-draft.service'
 import type { IRecipeDraftRepository } from '@/modules/recipe-drafts/repositories/recipe-draft.repository.interface'
 import type { RecipeDraftEntity } from '@/modules/recipe-drafts/entities/recipe-draft.entity'
+import type { IRecipeService } from '@/modules/recipes/services/recipe.service.interface'
+import type { RecipeEntity } from '@/modules/recipes/entities/recipe.entity'
 
 const draft: RecipeDraftEntity = {
   id: 'draft-1',
@@ -35,12 +37,35 @@ const mockRepo: IRecipeDraftRepository = {
   delete: vi.fn(),
 }
 
+const savedRecipe: RecipeEntity = {
+  id: 'recipe-1',
+  title: 'Борщ',
+  ingredients: [{ name: 'Свёкла', amount: '300', unit: 'г' }],
+  steps: [{ order: 1, text: 'Нарезать свёклу' }],
+  cookTimeMinutes: 90,
+  servings: 4,
+  tags: ['суп'],
+  sourceUrl: null,
+  imageKey: null,
+  videoUrl: null,
+  createdAt: new Date('2026-06-11T00:00:00.000Z'),
+  updatedAt: new Date('2026-06-11T00:00:00.000Z'),
+}
+
+const mockRecipeService: IRecipeService = {
+  getAll: vi.fn(),
+  getById: vi.fn(),
+  create: vi.fn(),
+  update: vi.fn(),
+  delete: vi.fn(),
+}
+
 describe('RecipeDraftService', () => {
   let service: RecipeDraftService
 
   beforeEach(() => {
     vi.resetAllMocks()
-    service = new RecipeDraftService(mockRepo)
+    service = new RecipeDraftService(mockRepo, mockRecipeService)
   })
 
   it('createDraft delegates to repository and returns editing state', async () => {
@@ -94,5 +119,32 @@ describe('RecipeDraftService', () => {
     )
 
     expect(mockRepo.update).not.toHaveBeenCalled()
+  })
+
+  it('saveDraft creates a recipe and marks the draft saved', async () => {
+    vi.mocked(mockRepo.findById).mockResolvedValue({
+      ...draft,
+      title: 'Борщ',
+      ingredients: [{ name: 'Свёкла', amount: '300', unit: 'г' }],
+      steps: [{ order: 1, text: 'Нарезать свёклу' }],
+    })
+    vi.mocked(mockRecipeService.create).mockResolvedValue(savedRecipe)
+    vi.mocked(mockRepo.markSaved).mockResolvedValue({ ...draft, state: 'saved', recipeId: 'recipe-1' })
+
+    const recipe = await service.saveDraft('draft-1')
+
+    expect(mockRecipeService.create).toHaveBeenCalledWith({
+      title: 'Борщ',
+      ingredients: [{ name: 'Свёкла', amount: '300', unit: 'г' }],
+      steps: [{ order: 1, text: 'Нарезать свёклу' }],
+      cookTimeMinutes: null,
+      servings: null,
+      tags: [],
+      sourceUrl: null,
+      imageKey: null,
+      videoUrl: null,
+    })
+    expect(mockRepo.markSaved).toHaveBeenCalledWith('draft-1', 'recipe-1')
+    expect(recipe.id).toBe('recipe-1')
   })
 })

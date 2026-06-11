@@ -65,6 +65,21 @@ const draft: RecipeDraftEntity = {
   expiresAt: new Date(),
 }
 
+const savedRecipe = {
+  id: 'recipe-1',
+  title: 'Борщ',
+  ingredients: [{ name: 'Свёкла', amount: '300', unit: 'г' }],
+  steps: [{ order: 1, text: 'Нарезать свёклу' }],
+  cookTimeMinutes: 90,
+  servings: 4,
+  tags: ['суп'],
+  sourceUrl: null,
+  imageKey: null,
+  videoUrl: null,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+}
+
 const mockDraftService: IRecipeDraftService = {
   createDraft: vi.fn(),
   getActiveDraft: vi.fn(),
@@ -73,6 +88,7 @@ const mockDraftService: IRecipeDraftService = {
   attachVideoUrl: vi.fn(),
   setEditing: vi.fn(),
   setConfirming: vi.fn(),
+  saveDraft: vi.fn(),
   markSaved: vi.fn(),
   discardDraft: vi.fn(),
 }
@@ -152,6 +168,7 @@ describe('RecipeBot URL detection', () => {
   it('moves draft to confirmation state and handles confirm/back callbacks', async () => {
     vi.mocked(mockDraftService.setConfirming).mockResolvedValue(draft)
     vi.mocked(mockDraftService.setEditing).mockResolvedValue(draft)
+    vi.mocked(mockDraftService.saveDraft).mockResolvedValue(savedRecipe as never)
 
     const confirm = await capturedCallbackHandler!('draft:save:draft-1', { chatId: 'chat-1', userId: 'user-1' })
 
@@ -163,7 +180,9 @@ describe('RecipeBot URL detection', () => {
     ]))
 
     const confirmSave = await capturedCallbackHandler!('draft:confirm_save:draft-1', { chatId: 'chat-1', userId: 'user-1' })
-    expect(confirmSave.text).toContain('Подтверждение сохранения')
+    expect(mockDraftService.saveDraft).toHaveBeenCalledWith('draft-1')
+    expect(confirmSave.text).toContain('✅')
+    expect(confirmSave.text).toContain('/recipes/recipe-1')
 
     const back = await capturedCallbackHandler!('draft:back:draft-1', { chatId: 'chat-1', userId: 'user-1' })
     expect(mockDraftService.setEditing).toHaveBeenCalledWith('draft-1')

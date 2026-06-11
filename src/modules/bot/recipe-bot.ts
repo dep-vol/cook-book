@@ -130,9 +130,19 @@ export class RecipeBot {
             ],
           }
         case 'confirm_save':
-          return {
-            text: 'Подтверждение сохранения будет доступно на следующем шаге.',
-            buttons: this.renderDraftMenuButtons(id),
+          try {
+            const recipe = await this.draftService.saveDraft(id)
+            return {
+              text:
+                `✅ Рецепт сохранён!\n` +
+                `${this.webUrl}/recipes/${recipe.id}\n\n` +
+                'Черновик помечен как сохранённый.',
+            }
+          } catch (error) {
+            return {
+              text: `❌ Не удалось сохранить черновик: ${error instanceof Error ? error.message : 'неизвестная ошибка'}`,
+              buttons: this.renderDraftMenuButtons(id),
+            }
           }
         case 'back':
           await this.draftService.setEditing(id)
