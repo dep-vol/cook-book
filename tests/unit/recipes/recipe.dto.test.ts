@@ -16,6 +16,50 @@ describe('CreateRecipeSchema', () => {
     expect(result.success).toBe(true)
   })
 
+  it('accepts videoUrl', () => {
+    const result = CreateRecipeSchema.parse({
+      title: 'Борщ',
+      ingredients: [{ name: 'Свёкла', amount: '300', unit: 'г' }],
+      steps: [{ order: 1, text: 'Нарезать свёклу' }],
+      cookTimeMinutes: 90,
+      servings: 4,
+      tags: ['суп'],
+      sourceUrl: null,
+      imageKey: null,
+      videoUrl: 'https://example.com/video.mp4',
+    })
+
+    expect(result.videoUrl).toBe('https://example.com/video.mp4')
+  })
+
+  it('rejects videoUrl when it is not an http or https URL', () => {
+    const baseRecipe = {
+      title: 'Борщ',
+      ingredients: [{ name: 'Свёкла', amount: '300', unit: 'г' }],
+      steps: [{ order: 1, text: 'Нарезать свёклу' }],
+      cookTimeMinutes: 90,
+      servings: 4,
+      tags: ['суп'],
+      sourceUrl: null,
+      imageKey: null,
+    }
+
+    const invalidUrlResult = CreateRecipeSchema.safeParse({
+      ...baseRecipe,
+      videoUrl: 'not-a-url',
+    })
+    const unsupportedProtocolResult = CreateRecipeSchema.safeParse({
+      ...baseRecipe,
+      videoUrl: 'ftp://example.com/video.mp4',
+    })
+
+    expect(invalidUrlResult.success).toBe(false)
+    expect(unsupportedProtocolResult.success).toBe(false)
+    if (!invalidUrlResult.success) {
+      expect(invalidUrlResult.error.issues[0].path).toContain('videoUrl')
+    }
+  })
+
   it('rejects a recipe with empty title', () => {
     const input = {
       title: '',

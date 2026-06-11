@@ -14,6 +14,15 @@ export const StepSchema = z.object({
   text: z.string().min(1),
 })
 
+const HttpUrlSchema = z.string().url().refine((value) => {
+  try {
+    const protocol = new URL(value).protocol
+    return protocol === 'http:' || protocol === 'https:'
+  } catch {
+    return false
+  }
+}, 'URL must use http or https')
+
 export const CreateRecipeSchema = z.object({
   title: z.string().min(1, 'Название обязательно'),
   ingredients: z.array(IngredientSchema).min(1, 'Добавьте хотя бы один ингредиент'),
@@ -23,7 +32,7 @@ export const CreateRecipeSchema = z.object({
   tags: z.array(z.string()).default([]),
   sourceUrl: z.string().url().nullable().optional(),
   imageKey: z.string().nullable().optional(),
-  videoUrl: z.string().nullable().optional(),
+  videoUrl: HttpUrlSchema.nullable().optional(),
 })
 
 export const UpdateRecipeSchema = CreateRecipeSchema.partial()
