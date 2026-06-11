@@ -23,6 +23,9 @@ export class RecipeDraftService implements IRecipeDraftService {
   }
 
   async updateDraft(id: string, patch: Partial<RecipeDraftEntity>): Promise<RecipeDraftEntity> {
+    if (patch.videoUrl !== undefined && patch.videoUrl !== null && !this.isHttpUrl(patch.videoUrl)) {
+      throw new Error('Video URL must use http or https')
+    }
     return this.repo.update(id, patch)
   }
 

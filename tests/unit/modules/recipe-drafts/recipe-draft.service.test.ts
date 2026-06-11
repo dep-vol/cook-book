@@ -39,7 +39,7 @@ describe('RecipeDraftService', () => {
   let service: RecipeDraftService
 
   beforeEach(() => {
-    vi.clearAllMocks()
+    vi.resetAllMocks()
     service = new RecipeDraftService(mockRepo)
   })
 
@@ -82,6 +82,14 @@ describe('RecipeDraftService', () => {
 
   it('attachVideoUrl rejects a non-http URL before calling repo update', async () => {
     await expect(service.attachVideoUrl('draft-1', 'ftp://example.com/video.mp4')).rejects.toThrow(
+      'Video URL must use http or https'
+    )
+
+    expect(mockRepo.update).not.toHaveBeenCalled()
+  })
+
+  it('updateDraft rejects a non-http videoUrl before calling repo update', async () => {
+    await expect(service.updateDraft('draft-1', { videoUrl: 'ftp://bad' })).rejects.toThrow(
       'Video URL must use http or https'
     )
 

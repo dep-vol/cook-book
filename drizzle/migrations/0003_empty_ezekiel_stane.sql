@@ -1,0 +1,1 @@
+CREATE INDEX "recipe_drafts_active_lookup_idx" ON "recipe_drafts" USING btree ("telegram_chat_id","telegram_user_id","state","expires_at","updated_at");
