@@ -15,7 +15,7 @@
 **Files:**
 - Modify: `src/modules/recipes/db/recipe.schema.ts`
 
-- [ ] **Step 1: Update the schema definition**
+- [x] **Step 1: Update the schema definition**
   Modify `src/modules/recipes/db/recipe.schema.ts` to replace `telegramChatId` and `telegramUserId` with `channel`, `channelChatId`, and `channelUserId`, and update the index:
   
   ```typescript
@@ -57,15 +57,15 @@
   )
   ```
 
-- [ ] **Step 2: Run Drizzle migration generator**
+- [x] **Step 2: Run Drizzle migration generator**
   Run: `pnpm db:generate`
   *(Note: If Drizzle asks if you renamed `telegram_chat_id` to `channel_chat_id` and `telegram_user_id` to `channel_user_id`, press Y to confirm so that it creates a rename migration rather than dropping/recreating columns).*
 
-- [ ] **Step 3: Run database migration**
+- [x] **Step 3: Run database migration**
   Run: `pnpm db:migrate`
   Expected: Successful application of the migrations without error.
 
-- [ ] **Step 4: Commit the schema changes and generated migrations**
+- [x] **Step 4: Commit the schema changes and generated migrations**
   Run:
   ```bash
   git add src/modules/recipes/db/recipe.schema.ts drizzle/
@@ -82,14 +82,14 @@
 - Modify: `src/modules/recipe-drafts/services/recipe-draft.service.interface.ts`
 - Modify: `tests/unit/modules/recipe-drafts/recipe-draft.service.test.ts`
 
-- [ ] **Step 1: Update the unit tests to use new field names**
+- [x] **Step 1: Update the unit tests to use new field names**
   Modify the mock draft definition and test assertions in `tests/unit/modules/recipe-drafts/recipe-draft.service.test.ts` to replace `telegramChatId`/`telegramUserId` with `channel: 'telegram'`, `channelChatId: 'chat-1'`, `channelUserId: 'user-1'`.
 
-- [ ] **Step 2: Verify compilation fails**
+- [x] **Step 2: Verify compilation fails**
   Run: `pnpm test:run tests/unit/modules/recipe-drafts/recipe-draft.service.test.ts`
   Expected: TypeScript compilation errors on type mismatches.
 
-- [ ] **Step 3: Update entity and interface definitions**
+- [x] **Step 3: Update entity and interface definitions**
   * Update `RecipeDraftEntity` in `src/modules/recipe-drafts/entities/recipe-draft.entity.ts`:
     ```typescript
     export interface RecipeDraftEntity {
@@ -153,11 +153,11 @@
     }
     ```
 
-- [ ] **Step 4: Verify compilation succeeds (but tests fail at runtime)**
+- [x] **Step 4: Verify compilation succeeds (but tests fail at runtime)**
   Run: `pnpm test:run tests/unit/modules/recipe-drafts/recipe-draft.service.test.ts`
   Expected: Tests compile successfully but fail because implementations of Repository and Service still use old parameters.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
   Run:
   ```bash
   git add src/modules/recipe-drafts/entities/recipe-draft.entity.ts src/modules/recipe-drafts/repositories/recipe-draft.repository.interface.ts src/modules/recipe-drafts/services/recipe-draft.service.interface.ts tests/unit/modules/recipe-drafts/recipe-draft.service.test.ts
@@ -172,20 +172,20 @@
 - Modify: `src/modules/recipe-drafts/repositories/recipe-draft.repository.ts`
 - Modify: `src/modules/recipe-drafts/services/recipe-draft.service.ts`
 
-- [ ] **Step 1: Update repository implementation**
+- [x] **Step 1: Update repository implementation**
   Modify `src/modules/recipe-drafts/repositories/recipe-draft.repository.ts`:
   * Update `create` method to store `channel`, `channelChatId`, `channelUserId`.
   * Rename `findByChatAndActive` to `findActiveDraft`, taking `channel`, `chatId`, and `userId` and query accordingly.
   
-- [ ] **Step 2: Update service implementation**
+- [x] **Step 2: Update service implementation**
   Modify `src/modules/recipe-drafts/services/recipe-draft.service.ts`:
   * Update `createDraft` and `getActiveDraft` implementation to accept and pass `channel`, `channelChatId`, and `channelUserId`.
 
-- [ ] **Step 3: Run draft service tests**
+- [x] **Step 3: Run draft service tests**
   Run: `pnpm test:run tests/unit/modules/recipe-drafts/recipe-draft.service.test.ts`
   Expected: PASS
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
   Run:
   ```bash
   git add src/modules/recipe-drafts/repositories/recipe-draft.repository.ts src/modules/recipe-drafts/services/recipe-draft.service.ts
@@ -200,23 +200,23 @@
 - Modify: `src/modules/bot/recipe-bot.ts`
 - Modify: `tests/unit/bot/recipe-bot.test.ts`
 
-- [ ] **Step 1: Update bot unit tests**
+- [x] **Step 1: Update bot unit tests**
   Modify `tests/unit/bot/recipe-bot.test.ts` to update test definitions of drafts, change mock service assertions to expect `channel: 'telegram'` on `createDraft` and `getActiveDraft`.
 
-- [ ] **Step 2: Verify bot tests fail**
+- [x] **Step 2: Verify bot tests fail**
   Run: `pnpm test:run tests/unit/bot/recipe-bot.test.ts`
   Expected: FAIL on parameter mismatch.
 
-- [ ] **Step 3: Refactor bot calls**
+- [x] **Step 3: Refactor bot calls**
   Modify `src/modules/bot/recipe-bot.ts`:
   * Change `this.draftService.createDraft` invocation to pass `channel: 'telegram'`, `channelChatId: context.chatId`, `channelUserId: context.userId`.
   * Change `this.draftService.getActiveDraft` invocation to pass `'telegram'`, `context.chatId`, `context.userId`.
 
-- [ ] **Step 4: Run bot tests to verify they pass**
+- [x] **Step 4: Run bot tests to verify they pass**
   Run: `pnpm test:run tests/unit/bot/recipe-bot.test.ts`
   Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
   Run:
   ```bash
   git add src/modules/bot/recipe-bot.ts tests/unit/bot/recipe-bot.test.ts
@@ -230,17 +230,17 @@
 **Files:**
 - None (Verification tasks)
 
-- [ ] **Step 1: Run full unit test suite**
+- [x] **Step 1: Run full unit test suite**
   Run: `pnpm test:run`
   Expected: All 49 unit tests pass.
 
-- [ ] **Step 2: Run Next.js production build**
+- [x] **Step 2: Run Next.js production build**
   Run: `pnpm build`
   Expected: Next.js builds successfully.
 
-- [ ] **Step 3: Verify bot entrypoint boots**
+- [x] **Step 3: Verify bot entrypoint still boots**
   Run bot task: `pnpm bot`
   Expected: Bot logs that it has started on long polling. Clean up bot background task after confirmation.
 
-- [ ] **Step 4: Push / Finalize**
+- [x] **Step 4: Push / Finalize**
   Verify clean workspace (`git status`).
