@@ -1,4 +1,11 @@
-import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3'
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+  DeleteObjectCommand,
+  HeadBucketCommand,
+  CreateBucketCommand,
+} from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { randomUUID } from 'crypto'
 
@@ -13,9 +20,41 @@ const s3 = new S3Client({
 })
 
 const BUCKET = process.env.MINIO_BUCKET!
+let bucketReady = false
+
+function isMissingBucketError(err: unknown): boolean {
+  if (!(err instanceof Error)) return false
+  const statusCode = (err as { $metadata?: { httpStatusCode?: number } }).$metadata?.httpStatusCode
+  return statusCode === 404 || err.name === 'NoSuchBucket' || err.name === 'NotFound'
+}
+
+function isBucketAlreadyExistsError(err: unknown): boolean {
+  if (!(err instanceof Error)) return false
+  const statusCode = (err as { $metadata?: { httpStatusCode?: number } }).$metadata?.httpStatusCode
+  return statusCode === 409 || err.name === 'BucketAlreadyOwnedByYou' || err.name === 'BucketAlreadyExists'
+}
+
+async function ensureBucketExists(): Promise<void> {
+  if (bucketReady) return
+
+  try {
+    await s3.send(new HeadBucketCommand({ Bucket: BUCKET }))
+  } catch (err) {
+    if (!isMissingBucketError(err)) throw err
+
+    try {
+      await s3.send(new CreateBucketCommand({ Bucket: BUCKET }))
+    } catch (createErr) {
+      if (!isBucketAlreadyExistsError(createErr)) throw createErr
+    }
+  }
+
+  bucketReady = true
+}
 
 export async function uploadImage(buffer: Buffer, mimeType: string): Promise<string> {
   const key = `recipes/${randomUUID()}`
+  await ensureBucketExists()
   await s3.send(new PutObjectCommand({
     Bucket: BUCKET,
     Key: key,
