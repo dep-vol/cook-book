@@ -3,8 +3,9 @@ export type RecipeDraftSourceType = 'manual' | 'text' | 'photo' | 'url'
 
 export interface RecipeDraftEntity {
   id: string
-  telegramChatId: string
-  telegramUserId: string
+  channel: string
+  channelChatId: string
+  channelUserId: string
   state: RecipeDraftState
   sourceType: RecipeDraftSourceType
   title: string | null

@@ -1,13 +1,14 @@
-import type { RecipeDraftEntity, RecipeDraftSourceType } from '../entities/recipe-draft.entity'
+import type { RecipeDraftEntity } from '../entities/recipe-draft.entity'
 import type { RecipeEntity } from '@/modules/recipes/entities/recipe.entity'
 
 export interface IRecipeDraftService {
   createDraft(input: {
-    telegramChatId: string
-    telegramUserId: string
-    sourceType: RecipeDraftSourceType
+    channel: string
+    channelChatId: string
+    channelUserId: string
+    sourceType: RecipeDraftEntity['sourceType']
   }): Promise<RecipeDraftEntity>
-  getActiveDraft(chatId: string, userId: string): Promise<RecipeDraftEntity | null>
+  getActiveDraft(channel: string, chatId: string, userId: string): Promise<RecipeDraftEntity | null>
   updateDraft(id: string, patch: Partial<RecipeDraftEntity>): Promise<RecipeDraftEntity>
   attachCoverImage(id: string, imageKey: string): Promise<RecipeDraftEntity>
   attachVideoUrl(id: string, videoUrl: string): Promise<RecipeDraftEntity>

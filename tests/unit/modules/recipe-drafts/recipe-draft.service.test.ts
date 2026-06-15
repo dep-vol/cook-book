@@ -7,8 +7,9 @@ import type { RecipeEntity } from '@/modules/recipes/entities/recipe.entity'
 
 const draft: RecipeDraftEntity = {
   id: 'draft-1',
-  telegramChatId: 'chat-1',
-  telegramUserId: 'user-1',
+  channel: 'telegram',
+  channelChatId: 'chat-1',
+  channelUserId: 'user-1',
   state: 'editing',
   sourceType: 'manual',
   title: null,
@@ -31,7 +32,7 @@ const draft: RecipeDraftEntity = {
 const mockRepo: IRecipeDraftRepository = {
   create: vi.fn(),
   findById: vi.fn(),
-  findByChatAndActive: vi.fn(),
+  findActiveDraft: vi.fn(),
   update: vi.fn(),
   markSaved: vi.fn(),
   delete: vi.fn(),
@@ -72,14 +73,16 @@ describe('RecipeDraftService', () => {
     vi.mocked(mockRepo.create).mockResolvedValue(draft)
 
     const result = await service.createDraft({
-      telegramChatId: 'chat-1',
-      telegramUserId: 'user-1',
+      channel: 'telegram',
+      channelChatId: 'chat-1',
+      channelUserId: 'user-1',
       sourceType: 'manual',
     })
 
     expect(mockRepo.create).toHaveBeenCalledWith({
-      telegramChatId: 'chat-1',
-      telegramUserId: 'user-1',
+      channel: 'telegram',
+      channelChatId: 'chat-1',
+      channelUserId: 'user-1',
       sourceType: 'manual',
     })
     expect(result.state).toBe('editing')
