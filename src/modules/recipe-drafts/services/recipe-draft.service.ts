@@ -15,15 +15,16 @@ export class RecipeDraftService implements IRecipeDraftService {
   ) {}
 
   async createDraft(input: {
-    telegramChatId: string
-    telegramUserId: string
+    channel: string
+    channelChatId: string
+    channelUserId: string
     sourceType: RecipeDraftSourceType
   }): Promise<RecipeDraftEntity> {
     return this.repo.create(input)
   }
 
-  async getActiveDraft(chatId: string, userId: string): Promise<RecipeDraftEntity | null> {
-    return this.repo.findByChatAndActive(chatId, userId)
+  async getActiveDraft(channel: string, chatId: string, userId: string): Promise<RecipeDraftEntity | null> {
+    return this.repo.findActiveDraft(channel, chatId, userId)
   }
 
   async updateDraft(id: string, patch: Partial<RecipeDraftEntity>): Promise<RecipeDraftEntity> {

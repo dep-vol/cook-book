@@ -2,7 +2,7 @@ import { and, desc, eq, gt, inArray, not } from 'drizzle-orm'
 import { injectable } from 'inversify'
 import { db } from '@/lib/db'
 import { recipeDrafts, type RecipeDraftRow } from '@/modules/recipes/db/recipe.schema'
-import type { RecipeDraftEntity } from '../entities/recipe-draft.entity'
+import type { RecipeDraftEntity, RecipeDraftSourceType } from '../entities/recipe-draft.entity'
 import type { IRecipeDraftRepository } from './recipe-draft.repository.interface'
 
 const DRAFT_TTL_MS = 7 * 24 * 60 * 60 * 1000
@@ -12,8 +12,9 @@ export class RecipeDraftRepository implements IRecipeDraftRepository {
   private mapToEntity(row: RecipeDraftRow): RecipeDraftEntity {
     return {
       id: row.id,
-      telegramChatId: row.telegramChatId,
-      telegramUserId: row.telegramUserId,
+      channel: row.channel,
+      channelChatId: row.channelChatId,
+      channelUserId: row.channelUserId,
       state: row.state,
       sourceType: row.sourceType,
       title: row.title,
@@ -35,16 +36,18 @@ export class RecipeDraftRepository implements IRecipeDraftRepository {
   }
 
   async create(data: {
-    telegramChatId: string
-    telegramUserId: string
-    sourceType: RecipeDraftEntity['sourceType']
+    channel: string
+    channelChatId: string
+    channelUserId: string
+    sourceType: RecipeDraftSourceType
   }): Promise<RecipeDraftEntity> {
     const now = new Date()
     const rows = await db
       .insert(recipeDrafts)
       .values({
-        telegramChatId: data.telegramChatId,
-        telegramUserId: data.telegramUserId,
+        channel: data.channel,
+        channelChatId: data.channelChatId,
+        channelUserId: data.channelUserId,
         sourceType: data.sourceType,
         state: 'editing',
         title: null,
@@ -70,14 +73,15 @@ export class RecipeDraftRepository implements IRecipeDraftRepository {
     return rows[0] ? this.mapToEntity(rows[0]) : null
   }
 
-  async findByChatAndActive(chatId: string, userId: string): Promise<RecipeDraftEntity | null> {
+  async findActiveDraft(channel: string, chatId: string, userId: string): Promise<RecipeDraftEntity | null> {
     const rows = await db
       .select()
       .from(recipeDrafts)
       .where(
         and(
-          eq(recipeDrafts.telegramChatId, chatId),
-          eq(recipeDrafts.telegramUserId, userId),
+          eq(recipeDrafts.channel, channel),
+          eq(recipeDrafts.channelChatId, chatId),
+          eq(recipeDrafts.channelUserId, userId),
           not(inArray(recipeDrafts.state, ['saved', 'expired'])),
           gt(recipeDrafts.expiresAt, new Date())
         )
@@ -89,8 +93,9 @@ export class RecipeDraftRepository implements IRecipeDraftRepository {
 
   async update(id: string, patch: Partial<RecipeDraftEntity>): Promise<RecipeDraftEntity> {
     const updateData: Partial<typeof recipeDrafts.$inferInsert> = {}
-    if (patch.telegramChatId !== undefined) updateData.telegramChatId = patch.telegramChatId
-    if (patch.telegramUserId !== undefined) updateData.telegramUserId = patch.telegramUserId
+    if (patch.channel !== undefined) updateData.channel = patch.channel
+    if (patch.channelChatId !== undefined) updateData.channelChatId = patch.channelChatId
+    if (patch.channelUserId !== undefined) updateData.channelUserId = patch.channelUserId
     if (patch.state !== undefined) updateData.state = patch.state
     if (patch.sourceType !== undefined) updateData.sourceType = patch.sourceType
     if (patch.title !== undefined) updateData.title = patch.title

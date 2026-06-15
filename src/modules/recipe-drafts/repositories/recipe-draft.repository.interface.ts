@@ -1,11 +1,11 @@
-import type { RecipeDraftEntity } from '../entities/recipe-draft.entity'
+import type { RecipeDraftEntity, RecipeDraftSourceType } from '../entities/recipe-draft.entity'
 
 export interface IRecipeDraftRepository {
   create(data: {
     channel: string
     channelChatId: string
     channelUserId: string
-    sourceType: RecipeDraftEntity['sourceType']
+    sourceType: RecipeDraftSourceType
   }): Promise<RecipeDraftEntity>
   findById(id: string): Promise<RecipeDraftEntity | null>
   findActiveDraft(channel: string, chatId: string, userId: string): Promise<RecipeDraftEntity | null>

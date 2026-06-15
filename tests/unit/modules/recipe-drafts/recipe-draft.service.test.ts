@@ -88,6 +88,15 @@ describe('RecipeDraftService', () => {
     expect(result.state).toBe('editing')
   })
 
+  it('getActiveDraft delegates to repository and returns active draft', async () => {
+    vi.mocked(mockRepo.findActiveDraft).mockResolvedValue(draft)
+
+    const result = await service.getActiveDraft('telegram', 'chat-1', 'user-1')
+
+    expect(mockRepo.findActiveDraft).toHaveBeenCalledWith('telegram', 'chat-1', 'user-1')
+    expect(result).toEqual(draft)
+  })
+
   it('attachCoverImage sets coverImageKey', async () => {
     const updatedDraft = { ...draft, coverImageKey: 'recipes/cover-1.jpg' }
     vi.mocked(mockRepo.update).mockResolvedValue(updatedDraft)
