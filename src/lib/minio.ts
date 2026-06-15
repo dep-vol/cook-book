@@ -16,7 +16,7 @@ const s3 = new S3Client({
     accessKeyId: process.env.MINIO_ACCESS_KEY!,
     secretAccessKey: process.env.MINIO_SECRET_KEY!,
   },
-  forcePathStyle: true, // обязательно для MinIO — иначе запросы идут на <bucket>.localhost
+  forcePathStyle: true,
 })
 
 const BUCKET = process.env.MINIO_BUCKET!
