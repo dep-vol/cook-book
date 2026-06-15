@@ -34,8 +34,9 @@ export const recipeDrafts = pgTable(
   'recipe_drafts',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    telegramChatId: text('telegram_chat_id').notNull(),
-    telegramUserId: text('telegram_user_id').notNull(),
+    channel: text('channel').notNull().default('telegram'),
+    channelChatId: text('channel_chat_id').notNull(),
+    channelUserId: text('channel_user_id').notNull(),
     state: recipeDraftStateEnum('state').notNull().default('editing'),
     sourceType: recipeDraftSourceTypeEnum('source_type').notNull(),
     title: text('title'),
@@ -56,11 +57,11 @@ export const recipeDrafts = pgTable(
   },
   (table) => [
     index('recipe_drafts_active_lookup_idx').on(
-      table.telegramChatId,
-      table.telegramUserId,
+      table.channel,
+      table.channelChatId,
+      table.channelUserId,
       table.state,
-      table.expiresAt,
-      table.updatedAt
+      table.expiresAt
     ),
   ]
 )
