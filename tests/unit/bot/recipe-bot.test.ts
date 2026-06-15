@@ -44,8 +44,9 @@ const mockService: IImportJobService = {
 
 const draft: RecipeDraftEntity = {
   id: 'draft-1',
-  telegramChatId: 'chat-1',
-  telegramUserId: 'user-1',
+  channel: 'telegram',
+  channelChatId: 'chat-1',
+  channelUserId: 'user-1',
   state: 'editing',
   sourceType: 'manual',
   title: null,
@@ -144,8 +145,9 @@ describe('RecipeBot URL detection', () => {
     const reply = await capturedCallbackHandler!('new_recipe', { chatId: 'chat-1', userId: 'user-1' })
 
     expect(mockDraftService.createDraft).toHaveBeenCalledWith({
-      telegramChatId: 'chat-1',
-      telegramUserId: 'user-1',
+      channel: 'telegram',
+      channelChatId: 'chat-1',
+      channelUserId: 'user-1',
       sourceType: 'manual',
     })
     expect(reply.text).toContain('Черновик')
@@ -153,6 +155,24 @@ describe('RecipeBot URL detection', () => {
       { text: 'Добавить ингредиент', data: 'draft:add_ingredient:draft-1' },
       { text: 'Сохранить', data: 'draft:save:draft-1' },
     ]))
+  })
+
+  it('continues active draft when continue_draft callback is triggered', async () => {
+    vi.mocked(mockDraftService.getActiveDraft).mockResolvedValue(draft)
+
+    const reply = await capturedCallbackHandler!('continue_draft', { chatId: 'chat-1', userId: 'user-1' })
+
+    expect(mockDraftService.getActiveDraft).toHaveBeenCalledWith('telegram', 'chat-1', 'user-1')
+    expect(reply.text).toContain('Черновик')
+  })
+
+  it('returns message to create new recipe when continue_draft has no active draft', async () => {
+    vi.mocked(mockDraftService.getActiveDraft).mockResolvedValue(null)
+
+    const reply = await capturedCallbackHandler!('continue_draft', { chatId: 'chat-1', userId: 'user-1' })
+
+    expect(mockDraftService.getActiveDraft).toHaveBeenCalledWith('telegram', 'chat-1', 'user-1')
+    expect(reply.text).toContain('Активного черновика пока нет')
   })
 
   it('asks for an ingredient and keeps the draft menu for ingredient callback', async () => {

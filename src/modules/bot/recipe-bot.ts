@@ -71,15 +71,16 @@ export class RecipeBot {
     this.adapter.onCallback(async (data, context) => {
       if (data === 'new_recipe') {
         const draft = await this.draftService.createDraft({
-          telegramChatId: context.chatId,
-          telegramUserId: context.userId,
+          channel: 'telegram',
+          channelChatId: context.chatId,
+          channelUserId: context.userId,
           sourceType: 'manual',
         })
         return this.renderDraft(draft)
       }
 
       if (data === 'continue_draft') {
-        const draft = await this.draftService.getActiveDraft(context.chatId, context.userId)
+        const draft = await this.draftService.getActiveDraft('telegram', context.chatId, context.userId)
         if (!draft) {
           return {
             text: 'Активного черновика пока нет. Можем создать новый.',
