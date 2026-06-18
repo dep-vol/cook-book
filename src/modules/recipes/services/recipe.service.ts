@@ -34,4 +34,8 @@ export class RecipeService implements IRecipeService {
   async delete(id: string): Promise<void> {
     await this.repo.delete(id)
   }
+
+  async deleteSeveral(ids: string[]): Promise<void> {
+    await this.repo.deleteSeveral(ids)
+  }
 }

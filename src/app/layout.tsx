@@ -16,11 +16,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ru">
       <body className={geist.className}>
         <header className="border-b">
-          <div className="container mx-auto px-4 py-3 max-w-6xl flex justify-between items-center">
+          <div className="container mx-auto px-4 py-3 max-w-6xl">
             <Link href="/" className="font-bold text-lg">Cook Book</Link>
-            <Link href="/recipes/new" className="text-sm text-gray-500 hover:text-black transition-colors">
-              + Добавить рецепт
-            </Link>
           </div>
         </header>
         <main>{children}</main>

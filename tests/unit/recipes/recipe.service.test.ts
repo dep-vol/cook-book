@@ -23,6 +23,7 @@ const mockRepo: IRecipeRepository = {
   create: vi.fn(),
   update: vi.fn(),
   delete: vi.fn(),
+  deleteSeveral: vi.fn(),
 }
 
 describe('RecipeService', () => {
@@ -55,5 +56,11 @@ describe('RecipeService', () => {
     vi.mocked(mockRepo.delete).mockResolvedValue(undefined)
     await service.delete('uuid-1')
     expect(mockRepo.delete).toHaveBeenCalledWith('uuid-1')
+  })
+
+  it('deleteSeveral calls repository', async () => {
+    vi.mocked(mockRepo.deleteSeveral).mockResolvedValue(undefined)
+    await service.deleteSeveral(['uuid-1', 'uuid-2'])
+    expect(mockRepo.deleteSeveral).toHaveBeenCalledWith(['uuid-1', 'uuid-2'])
   })
 })

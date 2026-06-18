@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import { container } from '@/container'
 import { RecipeServiceToken } from '@/tokens/recipe.tokens'
 import { RecipeGrid } from '@/modules/recipes/ui/recipe-grid'
@@ -9,15 +8,7 @@ export default async function RecipesPage() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Мои рецепты</h1>
-        <Link
-          href="/recipes/new"
-          className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
-        >
-          + Добавить рецепт
-        </Link>
-      </div>
+      <h1 className="text-2xl font-bold mb-6">Мои рецепты</h1>
       <RecipeGrid recipes={recipes} />
     </div>
   )

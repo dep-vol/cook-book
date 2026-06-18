@@ -4,9 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { container } from '@/container'
 import { RecipeServiceToken } from '@/tokens/recipe.tokens'
 import { CreateRecipeSchema, UpdateRecipeSchema } from '@/modules/recipes/transport/recipe.dto'
-
-// Server Actions — TransferLayer.
-// Zod-валидация на входе, DTO не покидает этот файл.
+import { requireAdmin } from '@/lib/require-admin'
 
 export async function getRecipesAction() {
   const service = container.get(RecipeServiceToken)
@@ -19,6 +17,7 @@ export async function getRecipeByIdAction(id: string) {
 }
 
 export async function createRecipeAction(formData: unknown) {
+  await requireAdmin()
   const parsed = CreateRecipeSchema.safeParse(formData)
   if (!parsed.success) {
     return { error: parsed.error.flatten() }
@@ -29,10 +28,12 @@ export async function createRecipeAction(formData: unknown) {
 
   revalidatePath('/')
   revalidatePath('/recipes')
+  revalidatePath('/admin')
   return { data: recipe }
 }
 
 export async function updateRecipeAction(id: string, formData: unknown) {
+  await requireAdmin()
   const parsed = UpdateRecipeSchema.safeParse(formData)
   if (!parsed.success) {
     return { error: parsed.error.flatten() }
@@ -43,13 +44,26 @@ export async function updateRecipeAction(id: string, formData: unknown) {
 
   revalidatePath('/')
   revalidatePath(`/recipes/${id}`)
+  revalidatePath('/admin')
   return { data: recipe }
 }
 
 export async function deleteRecipeAction(id: string) {
+  await requireAdmin()
   const service = container.get(RecipeServiceToken)
   await service.delete(id)
 
   revalidatePath('/')
   revalidatePath('/recipes')
+  revalidatePath('/admin')
+}
+
+export async function deleteSeveralRecipesAction(ids: string[]) {
+  await requireAdmin()
+  const service = container.get(RecipeServiceToken)
+  await service.deleteSeveral(ids)
+
+  revalidatePath('/')
+  revalidatePath('/recipes')
+  revalidatePath('/admin')
 }
