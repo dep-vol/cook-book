@@ -21,6 +21,13 @@ import { DraftHandler } from '@/modules/bot/handlers/draft.handler'
 import { ImportHandler } from '@/modules/bot/handlers/import.handler'
 import { CallbackHandler } from '@/modules/bot/handlers/callback.handler'
 import { DraftRenderer } from '@/modules/bot/renderer/draft.renderer'
+import { TextSourceToken, PhotoSourceToken, UrlSourceToken, VideoSourceToken, RecipeExtractorToken, RecognitionServiceToken } from '@/modules/recognition/recognition.tokens'
+import { TextSource } from '@/modules/recognition/sources/text.source'
+import { PhotoSource } from '@/modules/recognition/sources/photo.source'
+import { UrlSource } from '@/modules/recognition/sources/url.source'
+import { VideoSource } from '@/modules/recognition/sources/video.source'
+import { RecipeExtractor } from '@/modules/recognition/extractor/recipe-extractor'
+import { RecognitionService } from '@/modules/recognition/recognition.service'
 
 export const container = new Container()
 
@@ -39,4 +46,11 @@ container.bind(DraftRendererToken).to(DraftRenderer).inSingletonScope()
 container.bind(ImportHandlerToken).to(ImportHandler).inSingletonScope()
 container.bind(CallbackHandlerToken).to(CallbackHandler).inSingletonScope()
 container.bind(DraftHandlerToken).to(DraftHandler).inSingletonScope()
+
+container.bind(TextSourceToken).to(TextSource).inSingletonScope()
+container.bind(PhotoSourceToken).to(PhotoSource).inSingletonScope()
+container.bind(UrlSourceToken).to(UrlSource).inSingletonScope()
+container.bind(VideoSourceToken).to(VideoSource).inSingletonScope()
+container.bind(RecipeExtractorToken).to(RecipeExtractor).inSingletonScope()
+container.bind(RecognitionServiceToken).to(RecognitionService).inSingletonScope()
 
