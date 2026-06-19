@@ -74,4 +74,34 @@ describe('RecognitionService', () => {
     expect(draft.title).toBe('Борщ') // was null → filled
     expect(summary).toContain('ингредиент')
   })
+
+  it('createDraftFromContent: sets videoUrl to content.sourceUrl when sourceType is video', async () => {
+    const videoContent: NormalizedContent = { text: 'видео рецепт', sourceUrl: 'https://youtu.be/abc123' }
+    const svc = makeService()
+    await svc.createDraftFromContent(videoContent, 'video', { channel: 'telegram', chatId: 'c', userId: 'u' })
+    expect(draftService.updateDraft).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ videoUrl: 'https://youtu.be/abc123' }),
+    )
+  })
+
+  it('createDraftFromContent: sets videoUrl to null when sourceType is url (non-video)', async () => {
+    const urlContent: NormalizedContent = { text: 'рецепт со страницы', sourceUrl: 'https://eda.ru/recipe/1' }
+    const svc = makeService()
+    await svc.createDraftFromContent(urlContent, 'url', { channel: 'telegram', chatId: 'c', userId: 'u' })
+    expect(draftService.updateDraft).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ videoUrl: null }),
+    )
+  })
+
+  it('createDraftFromContent: sets videoUrl to null when sourceType is text', async () => {
+    const textContent: NormalizedContent = { text: 'просто текст' }
+    const svc = makeService()
+    await svc.createDraftFromContent(textContent, 'text', { channel: 'telegram', chatId: 'c', userId: 'u' })
+    expect(draftService.updateDraft).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ videoUrl: null }),
+    )
+  })
 })

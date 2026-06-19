@@ -58,6 +58,7 @@ export class RecognitionService implements IRecognitionService {
       ...this.toPatch(extracted),
       sourceText: content.text ?? null,
       sourceUrl: content.sourceUrl ?? null,
+      videoUrl: sourceType === 'video' ? (content.sourceUrl ?? null) : null,
       coverImageKey,
     })
   }

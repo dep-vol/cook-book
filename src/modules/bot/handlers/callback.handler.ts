@@ -8,6 +8,7 @@ import type { IRecognitionService } from '@/modules/recognition/recognition.serv
 import type { DraftRenderer } from '../renderer/draft.renderer'
 import type { BotResponse, BotCallbackContext } from '../bot-adapter.interface'
 import type { ICallbackHandler } from './callback.handler.interface'
+import { isVideoUrl } from '@/modules/recognition/sources/source.interface'
 
 const WEB_URL = () => process.env.WEB_URL ?? 'http://localhost:3000'
 
@@ -39,9 +40,13 @@ export class CallbackHandler implements ICallbackHandler {
         if (!draft.pendingSource) return { text: 'Источник не найден, пришли его снова.', buttons: buttons() }
         const content = draft.pendingSource
         await this.drafts.discardDraft(id)
+        const sourceType = content.sourceUrl && isVideoUrl(content.sourceUrl) ? 'video'
+          : content.sourceUrl ? 'url'
+          : content.images?.length ? 'photo'
+          : 'text'
         const created = await this.recognition.createDraftFromContent(
           content,
-          content.sourceUrl ? 'url' : (content.images?.length ? 'photo' : 'text'),
+          sourceType,
           { channel: context.channel, chatId: context.chatId, userId: context.userId },
         )
         return this.renderer.renderDraft(created)

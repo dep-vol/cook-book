@@ -41,4 +41,35 @@ describe('applyOperations', () => {
     const p = applyOperations(draft, [{ op: 'set_tags', tags: ['x', 'y'] }])
     expect(p.tags).toEqual(['x', 'y'])
   })
+
+  it('replace_ingredients replaces the whole ingredients array', () => {
+    const newItems = [{ name: 'Перец', amount: '5', unit: 'г' }, { name: 'Масло', amount: '2', unit: 'ст.л.' }]
+    const p = applyOperations(draft, [{ op: 'replace_ingredients', items: newItems }])
+    expect(p.ingredients).toEqual(newItems)
+    expect(p.ingredients).toHaveLength(2)
+  })
+
+  it('replace_steps replaces the whole steps array and renumbers from 1', () => {
+    const newSteps = [{ order: 99, text: 'X' }, { order: 50, text: 'Y' }]
+    const p = applyOperations(draft, [{ op: 'replace_steps', items: newSteps }])
+    expect(p.steps).toEqual([{ order: 1, text: 'X' }, { order: 2, text: 'Y' }])
+  })
+
+  it('set_field sets cookTimeMinutes as a number', () => {
+    const p = applyOperations(draft, [{ op: 'set_field', field: 'cookTimeMinutes', value: 45 }])
+    expect(p.cookTimeMinutes).toBe(45)
+    expect(typeof p.cookTimeMinutes).toBe('number')
+  })
+
+  it('set_field sets servings as a number', () => {
+    const p = applyOperations(draft, [{ op: 'set_field', field: 'servings', value: 6 }])
+    expect(p.servings).toBe(6)
+    expect(typeof p.servings).toBe('number')
+  })
+
+  it('set_field sets numeric field to null when value is null', () => {
+    const draftWithTime = { ...draft, cookTimeMinutes: 30 }
+    const p = applyOperations(draftWithTime, [{ op: 'set_field', field: 'cookTimeMinutes', value: null }])
+    expect(p.cookTimeMinutes).toBeNull()
+  })
 })

@@ -91,7 +91,7 @@ export class DraftRefinementService implements IDraftRefinementService {
   ) {}
 
   async refine(draft: RecipeDraftEntity, message: RefineMessage): Promise<RefineResult> {
-    const client = new OpenAI({ baseURL: this.llm.getLlmBaseUrl(), apiKey: this.llm.getLlmApiKey() })
+    const client = new OpenAI({ baseURL: this.llm.getLlmBaseUrl(), apiKey: this.llm.getLlmApiKey(), timeout: 60_000, maxRetries: 2 })
 
     const parts: OpenAI.Chat.Completions.ChatCompletionContentPart[] = [
       { type: 'text', text: `Текущий черновик:\n${JSON.stringify(this.draftForPrompt(draft))}` },

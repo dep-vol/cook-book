@@ -23,12 +23,13 @@ export class DraftHandler implements IDraftHandler {
   ) {}
 
   async handleText(draft: RecipeDraftEntity, text: string, setStatus?: SetStatus): Promise<BotResponse> {
+    const trimmed = text.trim()
     // ссылка при активном черновике = новый источник → развилка
-    if (URL_REGEX.test(text.trim())) {
-      return this.stashSourceAndAsk(draft, { kind: 'url', url: text.trim() }, setStatus)
+    if (URL_REGEX.test(trimmed)) {
+      return this.stashSourceAndAsk(draft, { kind: 'url', url: trimmed }, setStatus)
     }
     await setStatus?.('🤖 ИИ дорабатывает черновик...')
-    const { draft: updated, summary, answer } = await this.refinement.refine(draft, { text })
+    const { draft: updated, summary, answer } = await this.refinement.refine(draft, { text: trimmed })
     const responseText = answer ? `🤖 ${answer}\n\n${this.renderer.renderDraftText(updated)}` : `✅ ${summary}\n\n${this.renderer.renderDraftText(updated)}`
     return { text: responseText, buttons: this.renderer.renderDraftMenuButtons(updated.id) }
   }
