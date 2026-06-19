@@ -5,4 +5,8 @@ export interface ILLMService {
   getImgGenerationUrl(): string;
   getImgGenerationApiKey(): string;
   getImgGenerationModel(): string;
+  getLlmBaseUrl(): string;
+  getLlmApiKey(): string;
+  getRecognitionModel(): string;
+  getRefinementModel(): string;
 }
