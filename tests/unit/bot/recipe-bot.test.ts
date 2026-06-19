@@ -95,6 +95,7 @@ describe('RecipeBot routing', () => {
     vi.mocked(mockDraftHandler.handleText).mockResolvedValue('✅ шаг добавлен')
     await capturedTextHandler!('нарезать лук', { channel: 'telegram', chatId: 'chat-1', userId: 'user-1' })
     expect(mockDraftHandler.handleText).toHaveBeenCalledWith(draft, 'нарезать лук', undefined)
+    expect(mockDraftService.getActiveDraft).toHaveBeenCalledWith('telegram', 'chat-1', 'user-1')
     expect(mockImportHandler.handleText).not.toHaveBeenCalled()
   })
 
@@ -110,6 +111,7 @@ describe('RecipeBot routing', () => {
     vi.mocked(mockDraftHandler.handlePhoto).mockResolvedValue('✅ фото обработано')
     await capturedPhotoHandler!(Buffer.from(''), 'image/jpeg', undefined, { channel: 'telegram', chatId: 'chat-1', userId: 'user-1' })
     expect(mockDraftHandler.handlePhoto).toHaveBeenCalledWith(draft, expect.any(Buffer), 'image/jpeg', undefined, undefined)
+    expect(mockDraftService.getActiveDraft).toHaveBeenCalledWith('telegram', 'chat-1', 'user-1')
   })
 
   it('callback → callbackHandler.handle', async () => {

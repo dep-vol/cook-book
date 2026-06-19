@@ -80,6 +80,7 @@ describe('CallbackHandler', () => {
     vi.mocked(mockDraftService.getActiveDraft).mockResolvedValue(draft)
     const resp = await handler.handle('continue_draft', ctx)
     expect(resp.text).toContain('Черновик')
+    expect(mockDraftService.getActiveDraft).toHaveBeenCalledWith('telegram', 'chat-1', 'user-1')
   })
 
   it('continue_draft — нет черновика → предлагает создать', async () => {
