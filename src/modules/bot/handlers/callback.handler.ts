@@ -1,10 +1,9 @@
 // src/modules/bot/handlers/callback.handler.ts
 import { injectable, inject } from 'inversify'
-import { RecipeDraftServiceToken, DraftRefinementServiceToken } from '@/tokens/recipe-draft.tokens'
+import { RecipeDraftServiceToken } from '@/tokens/recipe-draft.tokens'
 import { RecognitionServiceToken } from '@/modules/recognition/recognition.tokens'
 import { DraftRendererToken } from '../bot.tokens'
 import type { IRecipeDraftService } from '@/modules/recipe-drafts/services/recipe-draft.service.interface'
-import type { IDraftRefinementService } from '@/modules/recipe-drafts/services/draft-refinement.service.interface'
 import type { IRecognitionService } from '@/modules/recognition/recognition.service.interface'
 import type { DraftRenderer } from '../renderer/draft.renderer'
 import type { BotResponse, BotCallbackContext } from '../bot-adapter.interface'
@@ -15,10 +14,9 @@ const WEB_URL = () => process.env.WEB_URL ?? 'http://localhost:3000'
 @injectable()
 export class CallbackHandler implements ICallbackHandler {
   constructor(
-    @inject(RecipeDraftServiceToken)     private readonly drafts: IRecipeDraftService,
-    @inject(DraftRefinementServiceToken) private readonly refinement: IDraftRefinementService,
-    @inject(RecognitionServiceToken)     private readonly recognition: IRecognitionService,
-    @inject(DraftRendererToken)          private readonly renderer: DraftRenderer,
+    @inject(RecipeDraftServiceToken) private readonly drafts: IRecipeDraftService,
+    @inject(RecognitionServiceToken) private readonly recognition: IRecognitionService,
+    @inject(DraftRendererToken)      private readonly renderer: DraftRenderer,
   ) {}
 
   async handle(data: string, context: BotCallbackContext): Promise<BotResponse> {
@@ -67,9 +65,10 @@ export class CallbackHandler implements ICallbackHandler {
           return { text: `❌ Не удалось опубликовать: ${error instanceof Error ? error.message : 'неизвестная ошибка'}`, buttons: buttons() }
         }
 
-      case 'back':
-        await this.drafts.setEditing(id)
-        return this.renderer.renderDraft(draft)
+      case 'back': {
+        const updated = await this.drafts.setEditing(id)
+        return this.renderer.renderDraft(updated)
+      }
 
       case 'discard':
         await this.drafts.discardDraft(id)

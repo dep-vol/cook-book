@@ -3,7 +3,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { CallbackHandler } from '@/modules/bot/handlers/callback.handler'
 import { DraftRenderer } from '@/modules/bot/renderer/draft.renderer'
 import type { IRecipeDraftService } from '@/modules/recipe-drafts/services/recipe-draft.service.interface'
-import type { IDraftRefinementService } from '@/modules/recipe-drafts/services/draft-refinement.service.interface'
 import type { IRecognitionService } from '@/modules/recognition/recognition.service.interface'
 import type { RecipeDraftEntity } from '@/modules/recipe-drafts/entities/recipe-draft.entity'
 import type { NormalizedContent } from '@/modules/recognition/sources/source.interface'
@@ -53,10 +52,6 @@ const mockDraftService: IRecipeDraftService = {
   discardDraft: vi.fn(),
 }
 
-const mockRefinement: IDraftRefinementService = {
-  refine: vi.fn(),
-}
-
 const mockRecognition: IRecognitionService = {
   recognize: vi.fn(),
   toContent: vi.fn(),
@@ -69,7 +64,7 @@ describe('CallbackHandler', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    handler = new CallbackHandler(mockDraftService, mockRefinement, mockRecognition, new DraftRenderer())
+    handler = new CallbackHandler(mockDraftService, mockRecognition, new DraftRenderer())
   })
 
   it('unknown scope → renderUnknownCallback', async () => {
@@ -145,6 +140,7 @@ describe('CallbackHandler', () => {
     expect(mockDraftService.saveDraft).toHaveBeenCalledWith('draft-1')
     expect(resp.text).toContain('✅ Опубликовано')
     expect(resp.text).toContain('/recipes/recipe-1')
+    expect(resp.text).toContain('/admin/recipes/recipe-1/edit')
   })
 
   it('back → setEditing + returns draft', async () => {
