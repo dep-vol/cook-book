@@ -1,7 +1,7 @@
 import 'reflect-metadata'
 import { Container } from 'inversify'
 import { RecipeRepositoryToken, RecipeServiceToken } from '@/tokens/recipe.tokens'
-import { RecipeDraftRepositoryToken, RecipeDraftServiceToken } from '@/tokens/recipe-draft.tokens'
+import { RecipeDraftRepositoryToken, RecipeDraftServiceToken, DraftRefinementServiceToken } from '@/tokens/recipe-draft.tokens'
 import { RecipeAssistantServiceToken } from '@/tokens/recipe-draft.tokens'
 import { ImportJobRepositoryToken, ImportJobServiceToken, RecipeParserToken } from '@/tokens/import-job.tokens'
 import { UrlScraperToken } from '@/tokens/url-scraper.tokens'
@@ -10,6 +10,7 @@ import { RecipeService } from '@/modules/recipes/services/recipe.service'
 import { RecipeDraftRepository } from '@/modules/recipe-drafts/repositories/recipe-draft.repository'
 import { RecipeDraftService } from '@/modules/recipe-drafts/services/recipe-draft.service'
 import { RecipeAssistantService } from '@/modules/recipe-drafts/services/recipe-assistant.service'
+import { DraftRefinementService } from '@/modules/recipe-drafts/services/draft-refinement.service'
 import { ImportJobRepository } from '@/modules/import-jobs/repositories/import-job.repository'
 import { ImportJobService } from '@/modules/import-jobs/services/import-job.service'
 import { RecipeParser } from '@/modules/import-jobs/services/recipe-parser.service'
@@ -36,6 +37,7 @@ container.bind(RecipeServiceToken).to(RecipeService).inSingletonScope()
 container.bind(RecipeDraftRepositoryToken).to(RecipeDraftRepository).inSingletonScope()
 container.bind(RecipeDraftServiceToken).to(RecipeDraftService).inSingletonScope()
 container.bind(RecipeAssistantServiceToken).to(RecipeAssistantService).inSingletonScope()
+container.bind(DraftRefinementServiceToken).to(DraftRefinementService).inSingletonScope()
 container.bind(ImportJobRepositoryToken).to(ImportJobRepository).inSingletonScope()
 container.bind(LLMServiceToken).to(LLMService).inSingletonScope()
 container.bind(RecipeParserToken).to(RecipeParser).inSingletonScope()
