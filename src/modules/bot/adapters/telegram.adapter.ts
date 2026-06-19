@@ -2,6 +2,7 @@ import { Bot } from 'grammy'
 import type { BotResponse, IBotAdapter, SetStatus } from '../bot-adapter.interface'
 
 export class TelegramAdapter implements IBotAdapter {
+  readonly channel = 'telegram'
   private readonly bot: Bot
   private readonly token: string
 
@@ -20,7 +21,7 @@ export class TelegramAdapter implements IBotAdapter {
     })
   }
 
-  onText(handler: (text: string, context?: { chatId: string; userId: string }, setStatus?: SetStatus) => Promise<string>): void {
+  onText(handler: (text: string, context?: { channel: string; chatId: string; userId: string }, setStatus?: SetStatus) => Promise<string>): void {
     this.bot.on('message:text', async ctx => {
       const statusMsg = await ctx.reply('⏳ Обрабатываю...')
       const chatId = String(ctx.chat.id)
@@ -31,7 +32,7 @@ export class TelegramAdapter implements IBotAdapter {
       }
 
       try {
-        const result = await handler(ctx.message.text, { chatId, userId }, setStatus)
+        const result = await handler(ctx.message.text, { channel: this.channel, chatId, userId }, setStatus)
         await ctx.api.editMessageText(chatId, statusMsg.message_id, result)
       } catch (err) {
         await ctx.api.editMessageText(chatId, statusMsg.message_id, '❌ Внутренняя ошибка. Попробуй ещё раз.')
@@ -40,7 +41,7 @@ export class TelegramAdapter implements IBotAdapter {
     })
   }
 
-  onPhoto(handler: (buffer: Buffer, mimeType: string, caption?: string, context?: { chatId: string; userId: string }, setStatus?: SetStatus) => Promise<string>): void {
+  onPhoto(handler: (buffer: Buffer, mimeType: string, caption?: string, context?: { channel: string; chatId: string; userId: string }, setStatus?: SetStatus) => Promise<string>): void {
     this.bot.on('message:photo', async ctx => {
       const statusMsg = await ctx.reply('⏳ Скачиваю фото...')
       const chatId = String(ctx.chat.id)
@@ -63,7 +64,7 @@ export class TelegramAdapter implements IBotAdapter {
         const caption = ctx.message.caption?.trim() || undefined
 
         await setStatus('🤖 Анализирую фото...')
-        const result = await handler(buffer, 'image/jpeg', caption, { chatId, userId }, setStatus)
+        const result = await handler(buffer, 'image/jpeg', caption, { channel: this.channel, chatId, userId }, setStatus)
         await ctx.api.editMessageText(chatId, statusMsg.message_id, result)
       } catch (err) {
         await ctx.api.editMessageText(chatId, statusMsg.message_id, '❌ Внутренняя ошибка. Попробуй ещё раз.')
@@ -72,7 +73,7 @@ export class TelegramAdapter implements IBotAdapter {
     })
   }
 
-  onCallback(handler: (data: string, context: { chatId: string; userId: string }) => Promise<BotResponse>): void {
+  onCallback(handler: (data: string, context: { channel: string; chatId: string; userId: string }) => Promise<BotResponse>): void {
     this.bot.on('callback_query:data', async ctx => {
       try {
         await ctx.answerCallbackQuery()
@@ -83,6 +84,7 @@ export class TelegramAdapter implements IBotAdapter {
         }
 
         const response = await handler(ctx.callbackQuery.data, {
+          channel: this.channel,
           chatId: String(chatId),
           userId: String(ctx.from.id),
         })

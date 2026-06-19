@@ -9,6 +9,7 @@ export interface BotResponse {
 }
 
 export interface BotCallbackContext {
+  channel: string
   chatId: string
   userId: string
 }
@@ -17,6 +18,7 @@ export interface BotCallbackContext {
 export type SetStatus = (text: string) => Promise<void>
 
 export interface IBotAdapter {
+  readonly channel: string
   onStart(handler: () => BotResponse): void
   onText(handler: (text: string, context?: BotCallbackContext, setStatus?: SetStatus) => Promise<string>): void
   onPhoto(handler: (buffer: Buffer, mimeType: string, caption?: string, context?: BotCallbackContext, setStatus?: SetStatus) => Promise<string>): void
