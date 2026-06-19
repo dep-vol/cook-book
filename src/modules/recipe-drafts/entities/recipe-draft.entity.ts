@@ -1,3 +1,5 @@
+import type { NormalizedContent } from '@/modules/recognition/sources/source.interface'
+
 export type RecipeDraftState = 'editing' | 'confirming' | 'saved' | 'expired'
 export type RecipeDraftSourceType = 'manual' | 'text' | 'photo' | 'url' | 'video'
 export type DraftPendingAction =
@@ -5,15 +7,6 @@ export type DraftPendingAction =
   | 'waiting_for_ingredient'
   | 'waiting_for_photo'
   | 'waiting_for_video'
-
-// Временный локальный тип. В Task 3 заменить на:
-//   import type { NormalizedContent } from '@/modules/recognition/sources/source.interface'
-export interface DraftPendingSource {
-  text?: string
-  images?: Array<{ base64: string; mimeType: string }>
-  sourceUrl?: string
-  coverImageUrl?: string
-}
 
 export interface RecipeDraftEntity {
   id: string
@@ -34,7 +27,7 @@ export interface RecipeDraftEntity {
   videoUrl: string | null
   lastAiSuggestion: unknown | null
   pendingAction: DraftPendingAction | null
-  pendingSource: DraftPendingSource | null
+  pendingSource: NormalizedContent | null
   recipeId: string | null
   createdAt: Date
   updatedAt: Date
