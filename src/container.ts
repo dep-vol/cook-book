@@ -17,9 +17,8 @@ import { RecipeParser } from '@/modules/import-jobs/services/recipe-parser.servi
 import { LLMService } from '@/modules/import-jobs/services/llm.service'
 import { LLMServiceToken } from '@/tokens/import-job.tokens'
 import { CheerioScraper } from '@/modules/url-scraper/cheerio.scraper'
-import { DraftHandlerToken, ImportHandlerToken, CallbackHandlerToken, DraftRendererToken } from '@/modules/bot/bot.tokens'
+import { DraftHandlerToken, CallbackHandlerToken, DraftRendererToken } from '@/modules/bot/bot.tokens'
 import { DraftHandler } from '@/modules/bot/handlers/draft.handler'
-import { ImportHandler } from '@/modules/bot/handlers/import.handler'
 import { CallbackHandler } from '@/modules/bot/handlers/callback.handler'
 import { DraftRenderer } from '@/modules/bot/renderer/draft.renderer'
 import { TextSourceToken, PhotoSourceToken, UrlSourceToken, VideoSourceToken, RecipeExtractorToken, RecognitionServiceToken } from '@/modules/recognition/recognition.tokens'
@@ -45,7 +44,6 @@ container.bind(UrlScraperToken).to(CheerioScraper).inSingletonScope()
 container.bind(ImportJobServiceToken).to(ImportJobService).inSingletonScope()
 
 container.bind(DraftRendererToken).to(DraftRenderer).inSingletonScope()
-container.bind(ImportHandlerToken).to(ImportHandler).inSingletonScope()
 container.bind(CallbackHandlerToken).to(CallbackHandler).inSingletonScope()
 container.bind(DraftHandlerToken).to(DraftHandler).inSingletonScope()
 

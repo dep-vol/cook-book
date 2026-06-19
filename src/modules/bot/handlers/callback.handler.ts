@@ -1,136 +1,79 @@
+// src/modules/bot/handlers/callback.handler.ts
 import { injectable, inject } from 'inversify'
-import { RecipeDraftServiceToken, RecipeAssistantServiceToken } from '@/tokens/recipe-draft.tokens'
+import { RecipeDraftServiceToken, DraftRefinementServiceToken } from '@/tokens/recipe-draft.tokens'
+import { RecognitionServiceToken } from '@/modules/recognition/recognition.tokens'
 import { DraftRendererToken } from '../bot.tokens'
 import type { IRecipeDraftService } from '@/modules/recipe-drafts/services/recipe-draft.service.interface'
-import type { IRecipeAssistantService } from '@/modules/recipe-drafts/services/recipe-assistant.service.interface'
-import type { RecipeDraftEntity } from '@/modules/recipe-drafts/entities/recipe-draft.entity'
+import type { IDraftRefinementService } from '@/modules/recipe-drafts/services/draft-refinement.service.interface'
+import type { IRecognitionService } from '@/modules/recognition/recognition.service.interface'
 import type { DraftRenderer } from '../renderer/draft.renderer'
 import type { BotResponse, BotCallbackContext } from '../bot-adapter.interface'
 import type { ICallbackHandler } from './callback.handler.interface'
 
+const WEB_URL = () => process.env.WEB_URL ?? 'http://localhost:3000'
+
 @injectable()
 export class CallbackHandler implements ICallbackHandler {
   constructor(
-    @inject(RecipeDraftServiceToken)     private readonly draftService: IRecipeDraftService,
-    @inject(RecipeAssistantServiceToken) private readonly assistant: IRecipeAssistantService,
+    @inject(RecipeDraftServiceToken)     private readonly drafts: IRecipeDraftService,
+    @inject(DraftRefinementServiceToken) private readonly refinement: IDraftRefinementService,
+    @inject(RecognitionServiceToken)     private readonly recognition: IRecognitionService,
     @inject(DraftRendererToken)          private readonly renderer: DraftRenderer,
   ) {}
 
   async handle(data: string, context: BotCallbackContext): Promise<BotResponse> {
-    if (data === 'new_recipe') {
-      const draft = await this.draftService.createDraft({
-        channel: context.channel,
-        channelChatId: context.chatId,
-        channelUserId: context.userId,
-        sourceType: 'manual',
-      })
-      return this.renderer.renderDraft(draft)
-    }
-
-    if (data === 'continue_draft') {
-      const draft = await this.draftService.getActiveDraft(context.channel, context.chatId, context.userId)
-      if (!draft) {
-        return {
-          text: 'Активного черновика пока нет. Можем создать новый.',
-          buttons: [[{ text: 'Создать рецепт', data: 'new_recipe' }]],
-        }
-      }
-      return this.renderer.renderDraft(draft)
-    }
-
     const [scope, action, id] = data.split(':')
     if (scope !== 'draft' || !action || !id) return this.renderer.renderUnknownCallback()
 
-    return this.handleDraftAction(action, id, context)
-  }
-
-  private async handleDraftAction(
-    action: string,
-    id: string,
-    context: BotCallbackContext,
-  ): Promise<BotResponse> {
+    const draft = await this.drafts.getActiveDraft(context.channel, context.chatId, context.userId)
+    if (!draft || draft.id !== id) return this.renderer.renderUnknownCallback()
     const buttons = () => this.renderer.renderDraftMenuButtons(id)
 
     switch (action) {
-      case 'add_ingredient':
-        await this.draftService.updateDraft(id, { pendingAction: 'waiting_for_ingredient' })
-        return {
-          text: '🥕 Пришли ингредиент. Например: «200 г муки» или «щепотка соли».\nМожно несколько в одном сообщении — по одному на строку.',
-          buttons: buttons(),
-        }
-
-      case 'add_step':
-        await this.draftService.updateDraft(id, { pendingAction: 'waiting_for_step' })
-        return {
-          text: '📝 Пришли шаг (или несколько сразу). ИИ нормализует и разобьёт их автоматически.',
-          buttons: buttons(),
-        }
-
-      case 'add_photo':
-        await this.draftService.updateDraft(id, { pendingAction: 'waiting_for_photo' })
-        return {
-          text: '📷 Пришли фото. ИИ сам определит — это обложка блюда, фото шага или фото с текстом рецепта.',
-          buttons: buttons(),
-        }
-
-      case 'add_video':
-        await this.draftService.updateDraft(id, { pendingAction: 'waiting_for_video' })
-        return { text: '🎬 Пришли ссылку на видео с рецептом.', buttons: buttons() }
-
-      case 'ask_ai': {
-        const draft = await this.draftService.getActiveDraft(context.channel, context.chatId, context.userId)
-        if (!draft) return this.renderer.renderUnknownCallback()
-        return {
-          text:
-            '🤖 Режим ИИ-помощника. Напиши что угодно:\n' +
-            '• шаги приготовления\n' +
-            '• ингредиенты\n' +
-            '• вопрос о рецепте\n\n' +
-            'ИИ сам поймёт что ты имеешь в виду и добавит в черновик.',
-          buttons: this.renderer.renderDraftMenuButtons(draft.id),
-        }
+      case 'merge': {
+        if (!draft.pendingSource) return { text: 'Источник не найден, пришли его снова.', buttons: buttons() }
+        const { draft: updated, summary } = await this.recognition.mergeContentIntoDraft(draft, draft.pendingSource)
+        await this.drafts.updateDraft(id, { pendingSource: null })
+        return { text: `✅ ${summary}\n\n${this.renderer.renderDraftText(updated)}`, buttons: buttons() }
       }
 
-      case 'suggest_missing': {
-        const draft = await this.draftService.getActiveDraft(context.channel, context.chatId, context.userId)
-        if (!draft) return this.renderer.renderUnknownCallback()
-        const suggestions = await this.assistant.suggestMissingFields(draft)
-        if (!suggestions.length) {
-          return { text: '✅ Черновик выглядит полным! Можно сохранять.', buttons: buttons() }
-        }
-        const patch: Record<string, unknown> = {}
-        let text = '💡 ИИ заполнил недостающие поля:\n\n'
-        for (const s of suggestions) { patch[s.field] = s.value; text += `• ${s.suggestion}\n` }
-        const updated = await this.draftService.updateDraft(id, patch as Partial<RecipeDraftEntity>)
-        return { text, buttons: this.renderer.renderDraftMenuButtons(updated.id) }
+      case 'newfrom': {
+        if (!draft.pendingSource) return { text: 'Источник не найден, пришли его снова.', buttons: buttons() }
+        const content = draft.pendingSource
+        await this.drafts.discardDraft(id)
+        const created = await this.recognition.createDraftFromContent(
+          content,
+          content.sourceUrl ? 'url' : (content.images?.length ? 'photo' : 'text'),
+          { channel: context.channel, chatId: context.chatId, userId: context.userId },
+        )
+        return this.renderer.renderDraft(created)
       }
 
       case 'save':
-        await this.draftService.setConfirming(id)
+        await this.drafts.setConfirming(id)
         return {
-          text: 'Проверь черновик перед сохранением. Финальное сохранение появится на следующем шаге.',
+          text: 'Опубликовать черновик как рецепт?',
           buttons: [
-            [{ text: 'Подтвердить сохранение', data: `draft:confirm_save:${id}` }],
-            [{ text: 'Вернуться к черновику', data: `draft:back:${id}` }],
+            [{ text: '✅ Подтвердить', data: `draft:confirm_save:${id}` }],
+            [{ text: '← Назад', data: `draft:back:${id}` }],
           ],
         }
 
       case 'confirm_save':
         try {
-          const recipe = await this.draftService.saveDraft(id)
-          return {
-            text: `✅ Рецепт сохранён!\n${process.env.WEB_URL ?? 'http://localhost:3000'}/recipes/${recipe.id}\n\nЧерновик помечен как сохранённый.`,
-          }
+          const recipe = await this.drafts.saveDraft(id)
+          return { text: `✅ Опубликовано!\nРецепт: ${WEB_URL()}/recipes/${recipe.id}\nРучная правка: ${WEB_URL()}/admin/recipes/${recipe.id}/edit` }
         } catch (error) {
-          return {
-            text: `❌ Не удалось сохранить черновик: ${error instanceof Error ? error.message : 'неизвестная ошибка'}`,
-            buttons: buttons(),
-          }
+          return { text: `❌ Не удалось опубликовать: ${error instanceof Error ? error.message : 'неизвестная ошибка'}`, buttons: buttons() }
         }
 
       case 'back':
-        await this.draftService.setEditing(id)
-        return { text: 'Возвращаюсь к черновику.', buttons: buttons() }
+        await this.drafts.setEditing(id)
+        return this.renderer.renderDraft(draft)
+
+      case 'discard':
+        await this.drafts.discardDraft(id)
+        return { text: '🗑 Черновик удалён. Пришли текст, фото или ссылку, чтобы начать новый.' }
 
       default:
         return this.renderer.renderUnknownCallback()

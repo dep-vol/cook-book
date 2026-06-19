@@ -20,8 +20,8 @@ export type SetStatus = (text: string) => Promise<void>
 export interface IBotAdapter {
   readonly channel: string
   onStart(handler: () => BotResponse): void
-  onText(handler: (text: string, context?: BotCallbackContext, setStatus?: SetStatus) => Promise<string>): void
-  onPhoto(handler: (buffer: Buffer, mimeType: string, caption?: string, context?: BotCallbackContext, setStatus?: SetStatus) => Promise<string>): void
+  onText(handler: (text: string, context?: BotCallbackContext, setStatus?: SetStatus) => Promise<BotResponse>): void
+  onPhoto(handler: (buffer: Buffer, mimeType: string, caption: string | undefined, context?: BotCallbackContext, setStatus?: SetStatus) => Promise<BotResponse>): void
   onCallback(handler: (data: string, context: BotCallbackContext) => Promise<BotResponse>): void
   start(): void
 }
