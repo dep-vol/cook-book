@@ -112,7 +112,7 @@ export class RecognitionService implements IRecognitionService {
     return null
   }
 
-  private sourceTypeOf(input: RecognitionInput): RecipeDraftSourceType {
+  private sourceTypeOf(input: RecognitionInput): 'text' | 'photo' | 'url' | 'video' {
     if (input.kind === 'text') return 'text'
     if (input.kind === 'photo') return 'photo'
     return isVideoUrl(input.url) ? 'video' : 'url'

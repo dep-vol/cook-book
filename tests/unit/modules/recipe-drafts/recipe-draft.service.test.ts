@@ -23,6 +23,8 @@ const draft: RecipeDraftEntity = {
   coverImageKey: null,
   videoUrl: null,
   lastAiSuggestion: null,
+  pendingAction: null,
+  pendingSource: null,
   recipeId: null,
   createdAt: new Date('2026-06-11T00:00:00.000Z'),
   updatedAt: new Date('2026-06-11T00:00:00.000Z'),
@@ -59,6 +61,7 @@ const mockRecipeService: IRecipeService = {
   create: vi.fn(),
   update: vi.fn(),
   delete: vi.fn(),
+  deleteSeveral: vi.fn(),
 }
 
 describe('RecipeDraftService', () => {
