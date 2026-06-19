@@ -13,15 +13,20 @@ export class ImportJobRepository implements IImportJobRepository {
       sourceType: row.sourceType as SourceType,
       rawInput: row.rawInput,
       recipeId: row.recipeId ?? null,
+      draftId: row.draftId ?? null,
       error: row.error ?? null,
       createdAt: row.createdAt,
     }
   }
 
-  async create(data: { sourceType: SourceType; rawInput: string }): Promise<ImportJobEntity> {
+  async create(data: { sourceType: SourceType; rawInput: string; draftId?: string }): Promise<ImportJobEntity> {
     const rows = await db
       .insert(importJobs)
-      .values({ sourceType: data.sourceType, rawInput: data.rawInput })
+      .values({
+        sourceType: data.sourceType,
+        rawInput: data.rawInput,
+        ...(data.draftId !== undefined ? { draftId: data.draftId } : {}),
+      })
       .returning()
     return this.mapToEntity(rows[0])
   }
@@ -34,13 +39,14 @@ export class ImportJobRepository implements IImportJobRepository {
   async updateStatus(
     id: string,
     status: ImportStatus,
-    opts?: { recipeId?: string; error?: string }
+    opts?: { recipeId?: string; draftId?: string; error?: string }
   ): Promise<void> {
     await db
       .update(importJobs)
       .set({
         status,
         ...(opts?.recipeId !== undefined ? { recipeId: opts.recipeId } : {}),
+        ...(opts?.draftId !== undefined ? { draftId: opts.draftId } : {}),
         ...(opts?.error !== undefined ? { error: opts.error } : {}),
       })
       .where(eq(importJobs.id, id))

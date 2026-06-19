@@ -2,7 +2,7 @@ import { and, desc, eq, gt, inArray, not } from 'drizzle-orm'
 import { injectable } from 'inversify'
 import { db } from '@/lib/db'
 import { recipeDrafts, type RecipeDraftRow } from '@/modules/recipes/db/recipe.schema'
-import type { DraftPendingAction, RecipeDraftEntity, RecipeDraftSourceType } from '../entities/recipe-draft.entity'
+import type { DraftPendingAction, DraftPendingSource, RecipeDraftEntity, RecipeDraftSourceType } from '../entities/recipe-draft.entity'
 import type { IRecipeDraftRepository } from './recipe-draft.repository.interface'
 
 const DRAFT_TTL_MS = 7 * 24 * 60 * 60 * 1000
@@ -29,6 +29,7 @@ export class RecipeDraftRepository implements IRecipeDraftRepository {
       videoUrl: row.videoUrl,
       lastAiSuggestion: row.lastAiSuggestion ?? null,
       pendingAction: (row.pendingAction as DraftPendingAction | null) ?? null,
+      pendingSource: (row.pendingSource as DraftPendingSource | null) ?? null,
       recipeId: row.recipeId,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
@@ -62,6 +63,7 @@ export class RecipeDraftRepository implements IRecipeDraftRepository {
         coverImageKey: null,
         videoUrl: null,
         lastAiSuggestion: null,
+        pendingSource: null,
         recipeId: null,
         expiresAt: new Date(now.getTime() + DRAFT_TTL_MS),
       })
@@ -111,6 +113,7 @@ export class RecipeDraftRepository implements IRecipeDraftRepository {
     if (patch.videoUrl !== undefined) updateData.videoUrl = patch.videoUrl
     if (patch.lastAiSuggestion !== undefined) updateData.lastAiSuggestion = patch.lastAiSuggestion
     if (patch.pendingAction !== undefined) updateData.pendingAction = patch.pendingAction
+    if (patch.pendingSource !== undefined) updateData.pendingSource = patch.pendingSource
     if (patch.recipeId !== undefined) updateData.recipeId = patch.recipeId
     if (patch.expiresAt !== undefined) updateData.expiresAt = patch.expiresAt
     updateData.updatedAt = new Date()
