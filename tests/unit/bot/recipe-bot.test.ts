@@ -1,46 +1,12 @@
+// tests/unit/bot/recipe-bot.test.ts
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { RecipeBot } from '@/modules/bot/recipe-bot'
-import type { IBotAdapter } from '@/modules/bot/bot-adapter.interface'
-import type { IImportJobService } from '@/modules/import-jobs/services/import-job.service.interface'
-import type { ImportJobEntity } from '@/modules/import-jobs/entities/import-job.entity'
+import type { IBotAdapter, BotResponse } from '@/modules/bot/bot-adapter.interface'
 import type { IRecipeDraftService } from '@/modules/recipe-drafts/services/recipe-draft.service.interface'
+import type { IDraftHandler } from '@/modules/bot/handlers/draft.handler.interface'
+import type { IImportHandler } from '@/modules/bot/handlers/import.handler.interface'
+import type { ICallbackHandler } from '@/modules/bot/handlers/callback.handler.interface'
 import type { RecipeDraftEntity } from '@/modules/recipe-drafts/entities/recipe-draft.entity'
-
-const doneJob: ImportJobEntity = {
-  id: 'job-1',
-  status: 'done',
-  sourceType: 'url',
-  rawInput: 'https://example.com/recipe',
-  recipeId: 'recipe-1',
-  error: null,
-  createdAt: new Date(),
-}
-
-const failedJob: ImportJobEntity = {
-  ...doneJob,
-  status: 'failed',
-  recipeId: null,
-  error: 'HTTP 403',
-}
-
-let capturedTextHandler: ((text: string) => Promise<string>) | null = null
-let capturedCallbackHandler: ((data: string, context: { chatId: string; userId: string }) => Promise<{ text: string; buttons?: { text: string; data: string }[][] }>) | null = null
-
-const mockAdapter: IBotAdapter = {
-  onStart: vi.fn(),
-  onText: vi.fn((handler) => { capturedTextHandler = handler }),
-  onPhoto: vi.fn(),
-  onCallback: vi.fn((handler) => { capturedCallbackHandler = handler }),
-  start: vi.fn(),
-}
-
-const mockService: IImportJobService = {
-  importFromText: vi.fn(),
-  importFromPhoto: vi.fn(),
-  importFromTextWithPhoto: vi.fn(),
-  importFromUrl: vi.fn(),
-  importFromTextWithPhoto: vi.fn(),
-}
 
 const draft: RecipeDraftEntity = {
   id: 'draft-1',
@@ -60,25 +26,23 @@ const draft: RecipeDraftEntity = {
   coverImageKey: null,
   videoUrl: null,
   lastAiSuggestion: null,
+  pendingAction: null,
   recipeId: null,
   createdAt: new Date(),
   updatedAt: new Date(),
   expiresAt: new Date(),
 }
 
-const savedRecipe = {
-  id: 'recipe-1',
-  title: 'Борщ',
-  ingredients: [{ name: 'Свёкла', amount: '300', unit: 'г' }],
-  steps: [{ order: 1, text: 'Нарезать свёклу' }],
-  cookTimeMinutes: 90,
-  servings: 4,
-  tags: ['суп'],
-  sourceUrl: null,
-  imageKey: null,
-  videoUrl: null,
-  createdAt: new Date(),
-  updatedAt: new Date(),
+let capturedTextHandler: ((text: string, context?: { chatId: string; userId: string }) => Promise<string>) | null = null
+let capturedPhotoHandler: ((buf: Buffer, mime: string, caption?: string, context?: { chatId: string; userId: string }) => Promise<string>) | null = null
+let capturedCallbackHandler: ((data: string, context: { chatId: string; userId: string }) => Promise<BotResponse>) | null = null
+
+const mockAdapter: IBotAdapter = {
+  onStart: vi.fn(),
+  onText: vi.fn((h) => { capturedTextHandler = h }),
+  onPhoto: vi.fn((h) => { capturedPhotoHandler = h }),
+  onCallback: vi.fn((h) => { capturedCallbackHandler = h }),
+  start: vi.fn(),
 }
 
 const mockDraftService: IRecipeDraftService = {
@@ -94,118 +58,68 @@ const mockDraftService: IRecipeDraftService = {
   discardDraft: vi.fn(),
 }
 
-describe('RecipeBot URL detection', () => {
+const mockDraftHandler: IDraftHandler = {
+  handleText: vi.fn(),
+  handlePhoto: vi.fn(),
+}
+
+const mockImportHandler: IImportHandler = {
+  handleText: vi.fn(),
+  handlePhoto: vi.fn(),
+}
+
+const mockCallbackHandler: ICallbackHandler = {
+  handle: vi.fn(),
+}
+
+describe('RecipeBot routing', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     capturedTextHandler = null
+    capturedPhotoHandler = null
     capturedCallbackHandler = null
-    const bot = new RecipeBot(mockAdapter, mockService, mockDraftService)
-    bot.register()
-  })
-
-  it('routes URL to importFromUrl, not importFromText', async () => {
-    vi.mocked(mockService.importFromUrl).mockResolvedValue(doneJob)
-
-    await capturedTextHandler!('https://example.com/recipe')
-
-    expect(mockService.importFromUrl).toHaveBeenCalledWith('https://example.com/recipe')
-    expect(mockService.importFromText).not.toHaveBeenCalled()
-  })
-
-  it('routes plain text to importFromText, not importFromUrl', async () => {
-    vi.mocked(mockService.importFromText).mockResolvedValue({ ...doneJob, sourceType: 'text' })
-
-    await capturedTextHandler!('Рецепт борща')
-
-    expect(mockService.importFromText).toHaveBeenCalledWith('Рецепт борща')
-    expect(mockService.importFromUrl).not.toHaveBeenCalled()
-  })
-
-  it('returns success message with recipe link for URL import', async () => {
-    vi.mocked(mockService.importFromUrl).mockResolvedValue(doneJob)
-
-    const reply = await capturedTextHandler!('https://example.com/recipe')
-
-    expect(reply).toContain('✅')
-    expect(reply).toContain('recipe-1')
-  })
-
-  it('returns error message when URL import fails', async () => {
-    vi.mocked(mockService.importFromUrl).mockResolvedValue(failedJob)
-
-    const reply = await capturedTextHandler!('https://example.com/recipe')
-
-    expect(reply).toContain('❌')
-    expect(reply).toContain('HTTP 403')
-  })
-
-  it('creates a manual draft from new_recipe callback and returns draft menu buttons', async () => {
-    vi.mocked(mockDraftService.createDraft).mockResolvedValue(draft)
-
-    const reply = await capturedCallbackHandler!('new_recipe', { chatId: 'chat-1', userId: 'user-1' })
-
-    expect(mockDraftService.createDraft).toHaveBeenCalledWith({
-      channel: 'telegram',
-      channelChatId: 'chat-1',
-      channelUserId: 'user-1',
-      sourceType: 'manual',
-    })
-    expect(reply.text).toContain('Черновик')
-    expect(reply.buttons?.flat()).toEqual(expect.arrayContaining([
-      { text: 'Добавить ингредиент', data: 'draft:add_ingredient:draft-1' },
-      { text: 'Сохранить', data: 'draft:save:draft-1' },
-    ]))
-  })
-
-  it('continues active draft when continue_draft callback is triggered', async () => {
-    vi.mocked(mockDraftService.getActiveDraft).mockResolvedValue(draft)
-
-    const reply = await capturedCallbackHandler!('continue_draft', { chatId: 'chat-1', userId: 'user-1' })
-
-    expect(mockDraftService.getActiveDraft).toHaveBeenCalledWith('telegram', 'chat-1', 'user-1')
-    expect(reply.text).toContain('Черновик')
-  })
-
-  it('returns message to create new recipe when continue_draft has no active draft', async () => {
     vi.mocked(mockDraftService.getActiveDraft).mockResolvedValue(null)
-
-    const reply = await capturedCallbackHandler!('continue_draft', { chatId: 'chat-1', userId: 'user-1' })
-
-    expect(mockDraftService.getActiveDraft).toHaveBeenCalledWith('telegram', 'chat-1', 'user-1')
-    expect(reply.text).toContain('Активного черновика пока нет')
+    new RecipeBot(mockAdapter, mockDraftService, mockDraftHandler, mockImportHandler, mockCallbackHandler).register()
   })
 
-  it('asks for an ingredient and keeps the draft menu for ingredient callback', async () => {
-    const reply = await capturedCallbackHandler!('draft:add_ingredient:draft-1', { chatId: 'chat-1', userId: 'user-1' })
-
-    expect(reply.text).toContain('ингредиент')
-    expect(reply.buttons?.flat()).toEqual(expect.arrayContaining([
-      { text: 'Добавить шаг', data: 'draft:add_step:draft-1' },
-      { text: 'Спросить ИИ', data: 'draft:ask_ai:draft-1' },
-    ]))
+  it('текст без черновика → importHandler.handleText', async () => {
+    vi.mocked(mockImportHandler.handleText).mockResolvedValue('✅ ok')
+    await capturedTextHandler!('Рецепт борща', { chatId: 'chat-1', userId: 'user-1' })
+    expect(mockImportHandler.handleText).toHaveBeenCalledWith('Рецепт борща', undefined)
+    expect(mockDraftHandler.handleText).not.toHaveBeenCalled()
   })
 
-  it('moves draft to confirmation state and handles confirm/back callbacks', async () => {
-    vi.mocked(mockDraftService.setConfirming).mockResolvedValue(draft)
-    vi.mocked(mockDraftService.setEditing).mockResolvedValue(draft)
-    vi.mocked(mockDraftService.saveDraft).mockResolvedValue(savedRecipe as never)
+  it('текст с активным черновиком → draftHandler.handleText', async () => {
+    vi.mocked(mockDraftService.getActiveDraft).mockResolvedValue(draft)
+    vi.mocked(mockDraftHandler.handleText).mockResolvedValue('✅ шаг добавлен')
+    await capturedTextHandler!('нарезать лук', { chatId: 'chat-1', userId: 'user-1' })
+    expect(mockDraftHandler.handleText).toHaveBeenCalledWith(draft, 'нарезать лук', undefined)
+    expect(mockImportHandler.handleText).not.toHaveBeenCalled()
+  })
 
-    const confirm = await capturedCallbackHandler!('draft:save:draft-1', { chatId: 'chat-1', userId: 'user-1' })
+  it('фото без черновика → importHandler.handlePhoto', async () => {
+    vi.mocked(mockImportHandler.handlePhoto).mockResolvedValue('✅ ok')
+    await capturedPhotoHandler!(Buffer.from(''), 'image/jpeg', undefined, { chatId: 'chat-1', userId: 'user-1' })
+    expect(mockImportHandler.handlePhoto).toHaveBeenCalled()
+    expect(mockDraftHandler.handlePhoto).not.toHaveBeenCalled()
+  })
 
-    expect(mockDraftService.setConfirming).toHaveBeenCalledWith('draft-1')
-    expect(confirm.text).toContain('Проверь черновик')
-    expect(confirm.buttons?.flat()).toEqual(expect.arrayContaining([
-      { text: 'Подтвердить сохранение', data: 'draft:confirm_save:draft-1' },
-      { text: 'Вернуться к черновику', data: 'draft:back:draft-1' },
-    ]))
+  it('фото с активным черновиком → draftHandler.handlePhoto', async () => {
+    vi.mocked(mockDraftService.getActiveDraft).mockResolvedValue(draft)
+    vi.mocked(mockDraftHandler.handlePhoto).mockResolvedValue('✅ фото обработано')
+    await capturedPhotoHandler!(Buffer.from(''), 'image/jpeg', undefined, { chatId: 'chat-1', userId: 'user-1' })
+    expect(mockDraftHandler.handlePhoto).toHaveBeenCalledWith(draft, expect.any(Buffer), 'image/jpeg', undefined, undefined)
+  })
 
-    const confirmSave = await capturedCallbackHandler!('draft:confirm_save:draft-1', { chatId: 'chat-1', userId: 'user-1' })
-    expect(mockDraftService.saveDraft).toHaveBeenCalledWith('draft-1')
-    expect(confirmSave.text).toContain('✅')
-    expect(confirmSave.text).toContain('/recipes/recipe-1')
+  it('callback → callbackHandler.handle', async () => {
+    vi.mocked(mockCallbackHandler.handle).mockResolvedValue({ text: 'ok' })
+    await capturedCallbackHandler!('new_recipe', { chatId: 'chat-1', userId: 'user-1' })
+    expect(mockCallbackHandler.handle).toHaveBeenCalledWith('new_recipe', { chatId: 'chat-1', userId: 'user-1' })
+  })
 
-    const back = await capturedCallbackHandler!('draft:back:draft-1', { chatId: 'chat-1', userId: 'user-1' })
-    expect(mockDraftService.setEditing).toHaveBeenCalledWith('draft-1')
-    expect(back.text).toContain('Возвращаюсь')
+  it('текст без context → importHandler.handleText', async () => {
+    vi.mocked(mockImportHandler.handleText).mockResolvedValue('✅ ok')
+    await capturedTextHandler!('Рецепт')
+    expect(mockImportHandler.handleText).toHaveBeenCalled()
   })
 })

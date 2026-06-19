@@ -3,7 +3,7 @@ import { injectable, inject } from 'inversify'
 import { RecipeDraftServiceToken, RecipeAssistantServiceToken } from '@/tokens/recipe-draft.tokens'
 import { ImportHandlerToken, DraftRendererToken } from '../bot.tokens'
 import type { IRecipeDraftService } from '@/modules/recipe-drafts/services/recipe-draft.service.interface'
-import type { IRecipeAssistantService, TextClassificationResult } from '@/modules/recipe-drafts/services/recipe-assistant.service.interface'
+import type { IRecipeAssistantService, TextClassificationResult, DraftSuggestion } from '@/modules/recipe-drafts/services/recipe-assistant.service.interface'
 import type { RecipeDraftEntity } from '@/modules/recipe-drafts/entities/recipe-draft.entity'
 import type { DraftRenderer } from '../renderer/draft.renderer'
 import type { IImportHandler } from './import.handler.interface'
@@ -70,7 +70,7 @@ export class DraftHandler implements IDraftHandler {
         const step = draft.steps.find(s => s.order === classification.stepOrder)
         return (
           `📸 ИИ определил: фото к шагу ${classification.stepOrder}${step ? ` («${step.text.slice(0, 40)}…»)` : ''}.\n\n` +
-          '⚠️ Прикрепление фото к шагам пока не поддерживается в данных.\n\n' +
+          '⚠️ Прикрепление фото к шагам пока не поддерживается in данных.\n\n' +
           this.renderer.renderDraftText(draft)
         )
       }
@@ -206,7 +206,7 @@ export class DraftHandler implements IDraftHandler {
 
   private async applyExtractedRecipe(
     draft: RecipeDraftEntity,
-    extracted: Awaited<ReturnType<typeof this.assistant.classifyPhoto>> extends { type: 'recipe'; extracted: infer E } ? E : never,
+    extracted: DraftSuggestion,
     setStatus?: SetStatus,
   ): Promise<string> {
     await setStatus?.('📖 Извлекаю данные рецепта из фото...')
@@ -214,8 +214,8 @@ export class DraftHandler implements IDraftHandler {
     const lines = ['📖 ИИ извлёк рецепт из фото:']
 
     if (extracted.title && !draft.title) { patch.title = extracted.title; lines.push(`• Название: ${extracted.title}`) }
-    if (extracted.ingredients.length) { patch.ingredients = [...draft.ingredients, ...extracted.ingredients]; lines.push(`• Ингредиентов: ${extracted.ingredients.length}`) }
-    if (extracted.steps.length) {
+    if (extracted.ingredients?.length) { patch.ingredients = [...draft.ingredients, ...extracted.ingredients]; lines.push(`• Ингредиентов: ${extracted.ingredients.length}`) }
+    if (extracted.steps?.length) {
       patch.steps = [...draft.steps, ...extracted.steps.map((s, i) => ({ order: draft.steps.length + i + 1, text: s.text }))]
       lines.push(`• Шагов: ${extracted.steps.length}`)
     }

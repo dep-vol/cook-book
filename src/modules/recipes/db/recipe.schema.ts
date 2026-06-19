@@ -50,6 +50,7 @@ export const recipeDrafts = pgTable(
     coverImageKey: text('cover_image_key'),
     videoUrl: text('video_url'),
     lastAiSuggestion: jsonb('last_ai_suggestion').$type<unknown>(),
+    pendingAction: text('pending_action'),
     recipeId: uuid('recipe_id').references(() => recipes.id, { onDelete: 'set null' }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

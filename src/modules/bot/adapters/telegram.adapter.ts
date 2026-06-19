@@ -1,5 +1,5 @@
 import { Bot } from 'grammy'
-import type { BotResponse, IBotAdapter } from '../bot-adapter.interface'
+import type { BotResponse, IBotAdapter, SetStatus } from '../bot-adapter.interface'
 
 export class TelegramAdapter implements IBotAdapter {
   private readonly bot: Bot
@@ -20,34 +20,53 @@ export class TelegramAdapter implements IBotAdapter {
     })
   }
 
-  onText(handler: (text: string) => Promise<string>): void {
+  onText(handler: (text: string, context?: { chatId: string; userId: string }, setStatus?: SetStatus) => Promise<string>): void {
     this.bot.on('message:text', async ctx => {
-      await ctx.reply('⏳ Обрабатываю...')
+      const statusMsg = await ctx.reply('⏳ Обрабатываю...')
+      const chatId = String(ctx.chat.id)
+      const userId = String(ctx.from?.id ?? ctx.chat.id)
+
+      const setStatus: SetStatus = async (text) => {
+        await ctx.api.editMessageText(chatId, statusMsg.message_id, text).catch(() => {/* ignore edit race */})
+      }
+
       try {
-        await ctx.reply(await handler(ctx.message.text))
+        const result = await handler(ctx.message.text, { chatId, userId }, setStatus)
+        await ctx.api.editMessageText(chatId, statusMsg.message_id, result)
       } catch (err) {
-        await ctx.reply('❌ Внутренняя ошибка. Попробуй ещё раз.')
+        await ctx.api.editMessageText(chatId, statusMsg.message_id, '❌ Внутренняя ошибка. Попробуй ещё раз.')
         console.error('Error in onText handler:', err)
       }
     })
   }
 
-  onPhoto(handler: (buffer: Buffer, mimeType: string, caption?: string) => Promise<string>): void {
+  onPhoto(handler: (buffer: Buffer, mimeType: string, caption?: string, context?: { chatId: string; userId: string }, setStatus?: SetStatus) => Promise<string>): void {
     this.bot.on('message:photo', async ctx => {
-      await ctx.reply('⏳ Скачиваю фото и обрабатываю...')
+      const statusMsg = await ctx.reply('⏳ Скачиваю фото...')
+      const chatId = String(ctx.chat.id)
+      const userId = String(ctx.from?.id ?? ctx.chat.id)
+
+      const setStatus: SetStatus = async (text) => {
+        await ctx.api.editMessageText(chatId, statusMsg.message_id, text).catch(() => {/* ignore edit race */})
+      }
+
       try {
+        await setStatus('⏳ Скачиваю фото...')
         const photo = ctx.message.photo.at(-1)!
         const file = await ctx.api.getFile(photo.file_id)
         const fileUrl = `https://api.telegram.org/file/bot${this.token}/${file.file_path}`
 
+        await setStatus('⏳ Загружаю фото...')
         const response = await fetch(fileUrl)
         if (!response.ok) throw new Error(`Failed to download photo: ${response.status}`)
         const buffer = Buffer.from(await response.arrayBuffer())
         const caption = ctx.message.caption?.trim() || undefined
 
-        await ctx.reply(await handler(buffer, 'image/jpeg', caption))
+        await setStatus('🤖 Анализирую фото...')
+        const result = await handler(buffer, 'image/jpeg', caption, { chatId, userId }, setStatus)
+        await ctx.api.editMessageText(chatId, statusMsg.message_id, result)
       } catch (err) {
-        await ctx.reply('❌ Внутренняя ошибка. Попробуй ещё раз.')
+        await ctx.api.editMessageText(chatId, statusMsg.message_id, '❌ Внутренняя ошибка. Попробуй ещё раз.')
         console.error('Error in onPhoto handler:', err)
       }
     })

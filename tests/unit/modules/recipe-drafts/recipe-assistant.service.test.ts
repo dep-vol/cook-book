@@ -70,6 +70,6 @@ describe('RecipeAssistantService', () => {
       ],
     })
 
-    await expect(service.suggestFromText('Рецепт борща')).rejects.toThrow('Invalid draft suggestion')
+    await expect(service.suggestFromText('Рецепт борща')).rejects.toThrow('Invalid AI response format')
   })
 })
