@@ -1,0 +1,1 @@
+ALTER TABLE "recipe_drafts" DROP COLUMN "pending_action";

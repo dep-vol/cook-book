@@ -7,7 +7,7 @@ const draft: RecipeDraftEntity = {
   sourceType: 'text', title: 'Старое', ingredients: [{ name: 'Соль', amount: '1', unit: 'щ' }],
   steps: [{ order: 1, text: 'A' }, { order: 2, text: 'B' }], cookTimeMinutes: null, servings: null,
   tags: [], sourceText: null, sourceUrl: null, coverImageKey: null, videoUrl: null,
-  lastAiSuggestion: null, pendingAction: null, pendingSource: null, recipeId: null,
+  lastAiSuggestion: null, pendingSource: null, recipeId: null,
   createdAt: new Date(), updatedAt: new Date(), expiresAt: new Date(),
 }
 

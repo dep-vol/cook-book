@@ -23,7 +23,6 @@ const draft: RecipeDraftEntity = {
   coverImageKey: null,
   videoUrl: null,
   lastAiSuggestion: null,
-  pendingAction: null,
   pendingSource: null,
   recipeId: null,
   createdAt: new Date('2026-06-11T00:00:00.000Z'),

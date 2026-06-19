@@ -2,11 +2,6 @@ import type { NormalizedContent } from '@/modules/recognition/sources/source.int
 
 export type RecipeDraftState = 'editing' | 'confirming' | 'saved' | 'expired'
 export type RecipeDraftSourceType = 'manual' | 'text' | 'photo' | 'url' | 'video'
-export type DraftPendingAction =
-  | 'waiting_for_step'
-  | 'waiting_for_ingredient'
-  | 'waiting_for_photo'
-  | 'waiting_for_video'
 
 export interface RecipeDraftEntity {
   id: string
@@ -26,7 +21,6 @@ export interface RecipeDraftEntity {
   coverImageKey: string | null
   videoUrl: string | null
   lastAiSuggestion: unknown | null
-  pendingAction: DraftPendingAction | null
   pendingSource: NormalizedContent | null
   recipeId: string | null
   createdAt: Date

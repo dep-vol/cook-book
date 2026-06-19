@@ -16,7 +16,7 @@ const baseDraft: RecipeDraftEntity = {
   id: 'd1', channel: 'telegram', channelChatId: 'c', channelUserId: 'u', state: 'editing',
   sourceType: 'text', title: null, ingredients: [], steps: [], cookTimeMinutes: null, servings: null,
   tags: [], sourceText: null, sourceUrl: null, coverImageKey: null, videoUrl: null,
-  lastAiSuggestion: null, pendingAction: null, pendingSource: null, recipeId: null,
+  lastAiSuggestion: null, pendingSource: null, recipeId: null,
   createdAt: new Date(), updatedAt: new Date(), expiresAt: new Date(),
 }
 
