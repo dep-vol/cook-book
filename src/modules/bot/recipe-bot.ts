@@ -38,7 +38,7 @@ export class RecipeBot {
     this.adapter.onText(async (text, context, setStatus) => {
       const trimmed = text.trim()
       if (context) {
-        const draft = await this.draftService.getActiveDraft('telegram', context.chatId, context.userId)
+        const draft = await this.draftService.getActiveDraft(context.channel, context.chatId, context.userId)
         if (draft) return this.draftHandler.handleText(draft, trimmed, setStatus)
       }
       return this.importHandler.handleText(trimmed, setStatus)
@@ -46,7 +46,7 @@ export class RecipeBot {
 
     this.adapter.onPhoto(async (buffer, mimeType, caption, context, setStatus) => {
       if (context) {
-        const draft = await this.draftService.getActiveDraft('telegram', context.chatId, context.userId)
+        const draft = await this.draftService.getActiveDraft(context.channel, context.chatId, context.userId)
         if (draft) return this.draftHandler.handlePhoto(draft, buffer, mimeType, caption, setStatus)
       }
       return this.importHandler.handlePhoto(buffer, mimeType, caption, setStatus)

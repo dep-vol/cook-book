@@ -33,11 +33,12 @@ const draft: RecipeDraftEntity = {
   expiresAt: new Date(),
 }
 
-let capturedTextHandler: ((text: string, context?: { chatId: string; userId: string }) => Promise<string>) | null = null
-let capturedPhotoHandler: ((buf: Buffer, mime: string, caption?: string, context?: { chatId: string; userId: string }) => Promise<string>) | null = null
-let capturedCallbackHandler: ((data: string, context: { chatId: string; userId: string }) => Promise<BotResponse>) | null = null
+let capturedTextHandler: ((text: string, context?: { channel: string; chatId: string; userId: string }) => Promise<string>) | null = null
+let capturedPhotoHandler: ((buf: Buffer, mime: string, caption?: string, context?: { channel: string; chatId: string; userId: string }) => Promise<string>) | null = null
+let capturedCallbackHandler: ((data: string, context: { channel: string; chatId: string; userId: string }) => Promise<BotResponse>) | null = null
 
 const mockAdapter: IBotAdapter = {
+  channel: 'telegram',
   onStart: vi.fn(),
   onText: vi.fn((h) => { capturedTextHandler = h }),
   onPhoto: vi.fn((h) => { capturedPhotoHandler = h }),
@@ -84,7 +85,7 @@ describe('RecipeBot routing', () => {
 
   it('текст без черновика → importHandler.handleText', async () => {
     vi.mocked(mockImportHandler.handleText).mockResolvedValue('✅ ok')
-    await capturedTextHandler!('Рецепт борща', { chatId: 'chat-1', userId: 'user-1' })
+    await capturedTextHandler!('Рецепт борща', { channel: 'telegram', chatId: 'chat-1', userId: 'user-1' })
     expect(mockImportHandler.handleText).toHaveBeenCalledWith('Рецепт борща', undefined)
     expect(mockDraftHandler.handleText).not.toHaveBeenCalled()
   })
@@ -92,14 +93,14 @@ describe('RecipeBot routing', () => {
   it('текст с активным черновиком → draftHandler.handleText', async () => {
     vi.mocked(mockDraftService.getActiveDraft).mockResolvedValue(draft)
     vi.mocked(mockDraftHandler.handleText).mockResolvedValue('✅ шаг добавлен')
-    await capturedTextHandler!('нарезать лук', { chatId: 'chat-1', userId: 'user-1' })
+    await capturedTextHandler!('нарезать лук', { channel: 'telegram', chatId: 'chat-1', userId: 'user-1' })
     expect(mockDraftHandler.handleText).toHaveBeenCalledWith(draft, 'нарезать лук', undefined)
     expect(mockImportHandler.handleText).not.toHaveBeenCalled()
   })
 
   it('фото без черновика → importHandler.handlePhoto', async () => {
     vi.mocked(mockImportHandler.handlePhoto).mockResolvedValue('✅ ok')
-    await capturedPhotoHandler!(Buffer.from(''), 'image/jpeg', undefined, { chatId: 'chat-1', userId: 'user-1' })
+    await capturedPhotoHandler!(Buffer.from(''), 'image/jpeg', undefined, { channel: 'telegram', chatId: 'chat-1', userId: 'user-1' })
     expect(mockImportHandler.handlePhoto).toHaveBeenCalled()
     expect(mockDraftHandler.handlePhoto).not.toHaveBeenCalled()
   })
@@ -107,14 +108,14 @@ describe('RecipeBot routing', () => {
   it('фото с активным черновиком → draftHandler.handlePhoto', async () => {
     vi.mocked(mockDraftService.getActiveDraft).mockResolvedValue(draft)
     vi.mocked(mockDraftHandler.handlePhoto).mockResolvedValue('✅ фото обработано')
-    await capturedPhotoHandler!(Buffer.from(''), 'image/jpeg', undefined, { chatId: 'chat-1', userId: 'user-1' })
+    await capturedPhotoHandler!(Buffer.from(''), 'image/jpeg', undefined, { channel: 'telegram', chatId: 'chat-1', userId: 'user-1' })
     expect(mockDraftHandler.handlePhoto).toHaveBeenCalledWith(draft, expect.any(Buffer), 'image/jpeg', undefined, undefined)
   })
 
   it('callback → callbackHandler.handle', async () => {
     vi.mocked(mockCallbackHandler.handle).mockResolvedValue({ text: 'ok' })
-    await capturedCallbackHandler!('new_recipe', { chatId: 'chat-1', userId: 'user-1' })
-    expect(mockCallbackHandler.handle).toHaveBeenCalledWith('new_recipe', { chatId: 'chat-1', userId: 'user-1' })
+    await capturedCallbackHandler!('new_recipe', { channel: 'telegram', chatId: 'chat-1', userId: 'user-1' })
+    expect(mockCallbackHandler.handle).toHaveBeenCalledWith('new_recipe', { channel: 'telegram', chatId: 'chat-1', userId: 'user-1' })
   })
 
   it('текст без context → importHandler.handleText', async () => {
