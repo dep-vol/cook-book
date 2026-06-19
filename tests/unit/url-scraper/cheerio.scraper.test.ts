@@ -19,7 +19,12 @@ vi.mock('puppeteer', () => ({
 import puppeteer from 'puppeteer'
 
 function makeResponse(html: string, status = 200) {
-  return { ok: status >= 200 && status < 300, status, text: async () => html } as Response
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    headers: { get: (name: string) => (name.toLowerCase() === 'content-type' ? 'text/html; charset=utf-8' : null) },
+    text: async () => html,
+  } as unknown as Response
 }
 
 const LONG_HTML = (body: string, head = '') =>
@@ -35,23 +40,19 @@ describe('CheerioScraper', () => {
     vi.clearAllMocks()
   })
 
-  it('returns og:description as text when it is at least 50 characters', async () => {
-    const ogContent = 'Рецепт борща: свёкла, капуста, морковь, картофель, томатная паста — классика!'
-    const html = LONG_HTML('<p>Другой текст</p>', `<meta property="og:description" content="${ogContent}">`)
-    mockFetch.mockResolvedValue(makeResponse(html))
+  it('returns body text from static HTML when it is long enough (>= 300 chars)', async () => {
+    mockFetch.mockResolvedValue(makeResponse(richHtml))
 
     const result = await scraper.scrape('https://example.com/recipe')
 
-    expect(result.text).toBe(ogContent)
+    expect(result.text).toContain('Рецепт борща')
     expect(puppeteer.launch).not.toHaveBeenCalled()
   })
 
   it('returns og:image as imageUrl when present', async () => {
-    const ogContent = 'Рецепт борща: свёкла, капуста, морковь, картофель, томатная паста — классика!'
     const html = LONG_HTML(
-      '<p>Текст</p>',
-      `<meta property="og:description" content="${ogContent}">
-       <meta property="og:image" content="https://example.com/photo.jpg">`,
+      richBody,
+      '<meta property="og:image" content="https://example.com/photo.jpg">',
     )
     mockFetch.mockResolvedValue(makeResponse(html))
 
@@ -66,16 +67,6 @@ describe('CheerioScraper', () => {
     const result = await scraper.scrape('https://example.com/recipe')
 
     expect(result.imageUrl).toBeUndefined()
-  })
-
-  it('falls back to body text when og:description is shorter than 50 characters', async () => {
-    const html = LONG_HTML(richBody, '<meta property="og:description" content="Коротко">')
-    mockFetch.mockResolvedValue(makeResponse(html))
-
-    const result = await scraper.scrape('https://example.com/recipe')
-
-    expect(result.text).toContain('Рецепт борща')
-    expect(puppeteer.launch).not.toHaveBeenCalled()
   })
 
   it('launches puppeteer when static content is shorter than 300 characters', async () => {
@@ -125,13 +116,13 @@ describe('CheerioScraper', () => {
     expect(result.text).not.toContain('alert')
   })
 
-  it('truncates body text to 8000 characters', async () => {
-    const html = LONG_HTML(`<p>${'А'.repeat(10000)}</p>`)
+  it('truncates body text to 15000 characters', async () => {
+    const html = LONG_HTML(`<p>${'А'.repeat(20000)}</p>`)
     mockFetch.mockResolvedValue(makeResponse(html))
 
     const result = await scraper.scrape('https://example.com/recipe')
 
-    expect(result.text.length).toBeLessThanOrEqual(8000)
+    expect(result.text.length).toBeLessThanOrEqual(15000)
   })
 
   it('throws with HTTP status when server returns non-2xx', async () => {
