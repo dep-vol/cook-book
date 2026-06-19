@@ -226,7 +226,7 @@ export class DraftHandler implements IDraftHandler {
 
     await setStatus?.('💾 Сохраняю в черновик...')
     await this.draftService.updateDraft(draft.id, { ...patch, pendingAction: null })
-    const updated = await this.draftService.getActiveDraft('telegram', draft.channelChatId, draft.channelUserId)
+    const updated = await this.draftService.getActiveDraft(draft.channel, draft.channelChatId, draft.channelUserId)
     return lines.join('\n') + '\n\n' + this.renderer.renderDraftText(updated ?? draft)
   }
 
