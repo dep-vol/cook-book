@@ -20,7 +20,7 @@ export class CallbackHandler implements ICallbackHandler {
   async handle(data: string, context: BotCallbackContext): Promise<BotResponse> {
     if (data === 'new_recipe') {
       const draft = await this.draftService.createDraft({
-        channel: 'telegram',
+        channel: context.channel,
         channelChatId: context.chatId,
         channelUserId: context.userId,
         sourceType: 'manual',
@@ -29,7 +29,7 @@ export class CallbackHandler implements ICallbackHandler {
     }
 
     if (data === 'continue_draft') {
-      const draft = await this.draftService.getActiveDraft('telegram', context.chatId, context.userId)
+      const draft = await this.draftService.getActiveDraft(context.channel, context.chatId, context.userId)
       if (!draft) {
         return {
           text: 'Активного черновика пока нет. Можем создать новый.',
@@ -79,7 +79,7 @@ export class CallbackHandler implements ICallbackHandler {
         return { text: '🎬 Пришли ссылку на видео с рецептом.', buttons: buttons() }
 
       case 'ask_ai': {
-        const draft = await this.draftService.getActiveDraft('telegram', context.chatId, context.userId)
+        const draft = await this.draftService.getActiveDraft(context.channel, context.chatId, context.userId)
         if (!draft) return this.renderer.renderUnknownCallback()
         return {
           text:
@@ -93,7 +93,7 @@ export class CallbackHandler implements ICallbackHandler {
       }
 
       case 'suggest_missing': {
-        const draft = await this.draftService.getActiveDraft('telegram', context.chatId, context.userId)
+        const draft = await this.draftService.getActiveDraft(context.channel, context.chatId, context.userId)
         if (!draft) return this.renderer.renderUnknownCallback()
         const suggestions = await this.assistant.suggestMissingFields(draft)
         if (!suggestions.length) {

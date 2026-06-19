@@ -6,7 +6,7 @@ import type { IRecipeDraftService } from '@/modules/recipe-drafts/services/recip
 import type { IRecipeAssistantService } from '@/modules/recipe-drafts/services/recipe-assistant.service.interface'
 import type { RecipeDraftEntity } from '@/modules/recipe-drafts/entities/recipe-draft.entity'
 
-const ctx = { chatId: 'chat-1', userId: 'user-1' }
+const ctx = { channel: 'telegram', chatId: 'chat-1', userId: 'user-1' }
 
 const draft: RecipeDraftEntity = {
   id: 'draft-1',
