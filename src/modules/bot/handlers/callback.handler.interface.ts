@@ -1,4 +1,3 @@
-// src/modules/bot/handlers/callback.handler.interface.ts
 import type { BotResponse, BotCallbackContext } from '../bot-adapter.interface'
 
 export interface ICallbackHandler {

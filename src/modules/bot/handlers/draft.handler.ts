@@ -1,4 +1,3 @@
-// src/modules/bot/handlers/draft.handler.ts
 import { injectable, inject } from 'inversify'
 import { RecipeDraftServiceToken, RecipeAssistantServiceToken } from '@/tokens/recipe-draft.tokens'
 import { ImportHandlerToken, DraftRendererToken } from '../bot.tokens'

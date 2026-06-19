@@ -61,7 +61,7 @@ const TextClassificationSchema = z.object({
   suggestion: z.object({
     cookTimeMinutes: z.coerce.number().int().positive().nullable().optional(),
     servings: z.coerce.number().int().positive().nullable().optional(),
-    title: z.string().min(1).optional(),
+    title: z.string().min(1).nullish().transform(v => v ?? undefined),
     tags: z.array(z.string()).optional(),
   }).optional(),
 })
@@ -370,7 +370,8 @@ export class RecipeAssistantService implements IRecipeAssistantService {
     if (!content) throw new Error('Empty AI response')
     try {
       return schema.parse(extractJson(content))
-    } catch {
+    } catch (err) {
+      console.error('[RecipeAssistant] parse failed. Raw content:', content, '\nError:', err)
       throw new Error('Invalid AI response format')
     }
   }

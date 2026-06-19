@@ -5,8 +5,7 @@ import type { IUrlScraper, ScrapeResult } from './url-scraper.interface'
 
 const USER_AGENT =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-const OG_MIN_LENGTH = 50
-const BODY_MAX_LENGTH = 8000
+const BODY_MAX_LENGTH = 15000
 const BODY_MIN_USEFUL = 300
 
 @injectable()
@@ -15,19 +14,31 @@ export class CheerioScraper implements IUrlScraper {
     const res = await fetch(url, { headers: { 'User-Agent': USER_AGENT } })
     if (!res.ok) throw new Error(`Failed to fetch ${url}: HTTP ${res.status}`)
 
-    const html = await res.text()
+    const html = await this.decodeResponse(res)
     const $ = cheerio.load(html)
     const imageUrl = $('meta[property="og:image"]').attr('content') || undefined
 
-    const ogDescription = $('meta[property="og:description"]').attr('content') ?? ''
-    if (ogDescription.length >= OG_MIN_LENGTH) return { text: ogDescription, imageUrl }
-
-    $('script, style, nav, footer, header').remove()
+    $('script, style, nav, footer, header, .related, .sidebar, .comments, #comments').remove()
     const bodyText = $('body').text().replace(/\s+/g, ' ').trim()
     if (bodyText.length >= BODY_MIN_USEFUL) return { text: bodyText.slice(0, BODY_MAX_LENGTH), imageUrl }
 
     const rendered = await this.scrapeRendered(url)
     return { text: rendered.text, imageUrl: rendered.imageUrl ?? imageUrl }
+  }
+
+  private async decodeResponse(res: Response): Promise<string> {
+    const contentType = res.headers.get('content-type') ?? ''
+    const charsetMatch = contentType.match(/charset=([\w-]+)/i)
+    const charset = charsetMatch?.[1]
+    if (charset && !/^utf-?8$/i.test(charset)) {
+      const buffer = await res.arrayBuffer()
+      try {
+        return new TextDecoder(charset).decode(buffer)
+      } catch {
+        return new TextDecoder('utf-8').decode(buffer)
+      }
+    }
+    return res.text()
   }
 
   private async scrapeRendered(url: string): Promise<ScrapeResult> {
@@ -46,9 +57,7 @@ export class CheerioScraper implements IUrlScraper {
       const html = await page.content()
       const $ = cheerio.load(html)
       const imageUrl = $('meta[property="og:image"]').attr('content') || undefined
-      const ogDescription = $('meta[property="og:description"]').attr('content') ?? ''
-      if (ogDescription.length >= OG_MIN_LENGTH) return { text: ogDescription, imageUrl }
-      $('script, style, nav, footer, header').remove()
+      $('script, style, nav, footer, header, .related, .sidebar, .comments, #comments').remove()
       return { text: $('body').text().replace(/\s+/g, ' ').trim().slice(0, BODY_MAX_LENGTH), imageUrl }
     } finally {
       await browser.close()

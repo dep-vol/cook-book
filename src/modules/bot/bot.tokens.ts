@@ -1,4 +1,3 @@
-// src/modules/bot/bot.tokens.ts
 import type { ServiceIdentifier } from 'inversify'
 import type { IDraftHandler }    from './handlers/draft.handler.interface'
 import type { IImportHandler }   from './handlers/import.handler.interface'

@@ -77,7 +77,7 @@ export class ImportJobService implements IImportJobService {
 
       let imageKey: string | null = null
       if (imageUrl) {
-        const imgRes = await fetch(imageUrl)
+        const imgRes = await fetch(new URL(imageUrl, url).href)
         if (imgRes.ok) {
           const buffer = Buffer.from(await imgRes.arrayBuffer())
           const mimeType = imgRes.headers.get('content-type') ?? 'image/jpeg'

@@ -7,10 +7,8 @@ export class TelegramAdapter implements IBotAdapter {
   private readonly token: string
 
   constructor() {
-    const token = process.env.BOT_TOKEN
-    if (!token) throw new Error('TELEGRAM_BOT_TOKEN is not set in .env')
-    this.token = token
-    this.bot = new Bot(token)
+    this.token = this.getToken()
+    this.bot = new Bot(this.token)
     this.bot.catch(err => console.error('Unhandled bot error:', err))
   }
 
@@ -111,5 +109,11 @@ export class TelegramAdapter implements IBotAdapter {
         ),
       },
     }
+  }
+
+  private getToken() {
+    const tokenProvider = process.env.BOT_TOKENS?.split(',').find(token => token.startsWith(this.channel))
+    if (!tokenProvider) throw new Error(`No token found for channel: ${this.channel}`)
+    return tokenProvider.split(':::')[1]
   }
 }

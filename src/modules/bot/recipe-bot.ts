@@ -1,4 +1,3 @@
-// src/modules/bot/recipe-bot.ts
 import { inject } from 'inversify'
 import { RecipeDraftServiceToken } from '@/tokens/recipe-draft.tokens'
 import { DraftHandlerToken, ImportHandlerToken, CallbackHandlerToken } from './bot.tokens'
@@ -37,6 +36,9 @@ export class RecipeBot {
 
     this.adapter.onText(async (text, context, setStatus) => {
       const trimmed = text.trim()
+      if (/^https?:\/\/\S+$/.test(trimmed)) {
+        return this.importHandler.handleText(trimmed, setStatus)
+      }
       if (context) {
         const draft = await this.draftService.getActiveDraft(context.channel, context.chatId, context.userId)
         if (draft) return this.draftHandler.handleText(draft, trimmed, setStatus)

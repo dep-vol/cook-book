@@ -1,4 +1,3 @@
-// src/modules/bot/handlers/callback.handler.ts
 import { injectable, inject } from 'inversify'
 import { RecipeDraftServiceToken, RecipeAssistantServiceToken } from '@/tokens/recipe-draft.tokens'
 import { DraftRendererToken } from '../bot.tokens'
