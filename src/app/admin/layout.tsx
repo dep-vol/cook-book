@@ -3,7 +3,7 @@ import { logoutAction } from '@/modules/auth/transport/auth.actions'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-dvh">
       <header className="border-b border-gray-800 px-6 py-3 flex items-center justify-between">
         <Link href="/admin" className="font-semibold hover:opacity-80">
           🍳 Cook Book Admin

@@ -67,7 +67,9 @@ export class CallbackHandler implements ICallbackHandler {
           const recipe = await this.drafts.saveDraft(id)
           return { text: `✅ Опубликовано!\nРецепт: ${WEB_URL()}/recipes/${recipe.id}\nРучная правка: ${WEB_URL()}/admin/recipes/${recipe.id}/edit` }
         } catch (error) {
-          return { text: `❌ Не удалось опубликовать: ${error instanceof Error ? error.message : 'неизвестная ошибка'}`, buttons: buttons() }
+          const message = error instanceof Error ? error.message : 'неизвестная ошибка'
+          const hint = message.startsWith('Не хватает:') ? '\nПришли это сообщением — я добавлю в черновик.' : ''
+          return { text: `❌ Не удалось опубликовать: ${message}${hint}`, buttons: buttons() }
         }
 
       case 'back': {

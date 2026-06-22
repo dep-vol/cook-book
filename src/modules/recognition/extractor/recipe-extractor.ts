@@ -32,7 +32,7 @@ const SYSTEM_PROMPT = `You extract a cooking recipe from the user's input (text 
 {"title": "name or null", "ingredients": [{"name": "...", "amount": "100", "unit": "г"}], "steps": [{"order": 1, "text": "..."}], "cookTimeMinutes": 30, "servings": 4, "tags": ["..."]}
 Rules:
 - Extract only what is actually present. If something is unknown: title=null, unknown numbers=null, missing lists=[].
-- Never invent ingredients or steps that are not implied by the input.
+- Never invent ingredients or steps that are not literally present in the input, even if the title strongly suggests them.
 - steps[].order starts at 1 and increments by 1.
 - Tags are short keywords in the language of the recipe.
 - Output valid JSON only.`

@@ -38,6 +38,9 @@ describe('CheerioScraper', () => {
   beforeEach(() => {
     scraper = new CheerioScraper()
     vi.clearAllMocks()
+    // clearAllMocks не сбрасывает реализации — возвращаем goto дефолт,
+    // чтобы mockRejectedValue из одного теста не утекал в следующие
+    mockPage.goto.mockResolvedValue(undefined)
   })
 
   it('returns body text from static HTML when it is long enough (>= 300 chars)', async () => {
@@ -125,10 +128,34 @@ describe('CheerioScraper', () => {
     expect(result.text.length).toBeLessThanOrEqual(15000)
   })
 
-  it('throws with HTTP status when server returns non-2xx', async () => {
-    mockFetch.mockResolvedValue(makeResponse('', 403))
+  it('falls back to puppeteer when fetch throws (e.g. redirect loop)', async () => {
+    const renderedHtml = LONG_HTML('<p>' + 'Рецепт борща из свёклы. '.repeat(20) + '</p>')
+    mockFetch.mockRejectedValue(new Error('fetch failed'))
+    mockPage.content.mockResolvedValue(renderedHtml)
 
-    await expect(scraper.scrape('https://example.com/recipe')).rejects.toThrow('HTTP 403')
+    const result = await scraper.scrape('https://vkvideo.ru/clip-1_2')
+
+    expect(puppeteer.launch).toHaveBeenCalledOnce()
+    expect(result.text).toContain('Рецепт борща из свёклы')
+  })
+
+  it('falls back to puppeteer when server returns non-2xx', async () => {
+    const renderedHtml = LONG_HTML('<p>' + 'Рецепт борща из свёклы. '.repeat(20) + '</p>')
+    mockFetch.mockResolvedValue(makeResponse('', 403))
+    mockPage.content.mockResolvedValue(renderedHtml)
+
+    const result = await scraper.scrape('https://example.com/recipe')
+
+    expect(puppeteer.launch).toHaveBeenCalledOnce()
+    expect(result.text).toContain('Рецепт борща из свёклы')
+  })
+
+  it('propagates puppeteer error when both fetch and rendering fail', async () => {
+    mockFetch.mockRejectedValue(new Error('fetch failed'))
+    mockPage.goto.mockRejectedValue(new Error('Navigation timeout'))
+
+    await expect(scraper.scrape('https://vkvideo.ru/clip-1_2')).rejects.toThrow('Navigation timeout')
+    expect(mockBrowser.close).toHaveBeenCalledOnce()
   })
 
   it('passes User-Agent header to fetch', async () => {

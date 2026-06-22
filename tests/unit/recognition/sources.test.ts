@@ -47,6 +47,15 @@ describe('recognition sources', () => {
     expect(s.detect({ kind: 'url', url: 'https://eda.ru/recipe/1' })).toBe(false)
   })
 
+  it('VideoSource detects VK video/clip urls but not regular vk.com pages', () => {
+    const s = new VideoSource(scraper)
+    expect(s.detect({ kind: 'url', url: 'https://vkvideo.ru/clip-231763510_456258625' })).toBe(true)
+    expect(s.detect({ kind: 'url', url: 'https://vkvideo.ru/video-1_2' })).toBe(true)
+    expect(s.detect({ kind: 'url', url: 'https://vk.com/video-123_456' })).toBe(true)
+    expect(s.detect({ kind: 'url', url: 'https://vk.com/clip-1_2' })).toBe(true)
+    expect(s.detect({ kind: 'url', url: 'https://vk.com/durov' })).toBe(false)
+  })
+
   it('VideoSource scrapes description and marks it as a video transcript', async () => {
     const s = new VideoSource(scraper)
     const out = await s.extract({ kind: 'url', url: 'https://youtu.be/abc' })

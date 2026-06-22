@@ -15,7 +15,7 @@ export interface IRecognitionSource {
   extract(input: RecognitionInput): Promise<NormalizedContent>
 }
 
-const VIDEO_HOST_RE = /(youtube\.com|youtu\.be|instagram\.com|tiktok\.com)/i
+const VIDEO_HOST_RE = /(youtube\.com|youtu\.be|instagram\.com|tiktok\.com|vkvideo\.ru|vk\.com\/(?:video|clip))/i
 
 export function isVideoUrl(url: string): boolean {
   return VIDEO_HOST_RE.test(url)

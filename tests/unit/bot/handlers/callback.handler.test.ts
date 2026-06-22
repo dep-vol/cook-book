@@ -142,6 +142,16 @@ describe('CallbackHandler', () => {
     expect(resp.text).toContain('/admin/recipes/recipe-1/edit')
   })
 
+  it('confirm_save → incomplete draft error tells the user what to send next', async () => {
+    vi.mocked(mockDraftService.getActiveDraft).mockResolvedValue(draft)
+    vi.mocked(mockDraftService.saveDraft).mockRejectedValue(new Error('Не хватает: шаги приготовления'))
+
+    const resp = await handler.handle('draft:confirm_save:draft-1', ctx)
+    expect(resp.text).toContain('❌ Не удалось опубликовать: Не хватает: шаги приготовления')
+    expect(resp.text).toContain('Пришли это сообщением — я добавлю в черновик.')
+    expect(resp.buttons?.flat().map(b => b.data)).toContain('draft:save:draft-1')
+  })
+
   it('back → setEditing + returns draft', async () => {
     vi.mocked(mockDraftService.getActiveDraft).mockResolvedValue(draft)
     vi.mocked(mockDraftService.setEditing).mockResolvedValue(draft)

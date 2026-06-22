@@ -55,4 +55,13 @@ describe('RecipeExtractor', () => {
     createMock.mockResolvedValueOnce({ choices: [{ message: { content: '' } }] })
     await expect(new RecipeExtractor(llm).extract({ text: 'x' })).rejects.toThrow()
   })
+
+  it('instructs the model to never infer ingredients/steps that are not literally present', async () => {
+    reply(JSON.stringify({ title: null, ingredients: [], steps: [], cookTimeMinutes: null, servings: null, tags: [] }))
+    await new RecipeExtractor(llm).extract({ text: 'x' })
+    const sent = createMock.mock.calls[0][0]
+    const systemMsg = sent.messages.find((m: { role: string }) => m.role === 'system')
+    expect(systemMsg.content).not.toMatch(/not implied by the input/)
+    expect(systemMsg.content).toMatch(/not (?:literally |explicitly )?present in the input/)
+  })
 })
