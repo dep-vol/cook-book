@@ -60,7 +60,11 @@ export class RecipeDraftService implements IRecipeDraftService {
     }
 
     if (!draft.title || draft.title.trim().length === 0 || draft.ingredients.length === 0 || draft.steps.length === 0) {
-      throw new Error('Draft is incomplete')
+      const missing: string[] = []
+      if (!draft.title || draft.title.trim().length === 0) missing.push('название')
+      if (draft.ingredients.length === 0) missing.push('ингредиенты')
+      if (draft.steps.length === 0) missing.push('шаги приготовления')
+      throw new Error(`Не хватает: ${missing.join(', ')}`)
     }
 
     const recipe = await this.recipeService.create({

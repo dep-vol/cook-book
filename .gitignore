@@ -43,3 +43,7 @@ next-env.d.ts
 
 # superpowers brainstorming
 .superpowers/
+
+# codegraph runtime files (Turbopack panics on .sock)
+.codegraph/*.sock
+.codegraph/*.pid

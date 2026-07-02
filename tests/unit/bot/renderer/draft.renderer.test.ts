@@ -21,7 +21,7 @@ const baseDraft: RecipeDraftEntity = {
   coverImageKey: null,
   videoUrl: null,
   lastAiSuggestion: null,
-  pendingAction: null,
+  pendingSource: null,
   recipeId: null,
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -45,15 +45,28 @@ describe('DraftRenderer', () => {
     const resp = renderer.renderDraft(baseDraft)
     expect(resp.text).toContain('Борщ')
     expect(resp.buttons?.flat().map(b => b.data)).toContain(`draft:save:draft-1`)
+    expect(resp.buttons?.flat().map(b => b.data)).toContain(`draft:discard:draft-1`)
   })
 
-  it('renderDraftMenuButtons содержит все 7 кнопок', () => {
+  it('renderDraftMenuButtons содержит 2 кнопки (Опубликовать и Удалить)', () => {
     const buttons = renderer.renderDraftMenuButtons('draft-1')
-    expect(buttons).toHaveLength(7)
+    expect(buttons).toHaveLength(2)
+    const flatData = buttons!.flat().map(b => b.data)
+    expect(flatData).toContain('draft:save:draft-1')
+    expect(flatData).toContain('draft:discard:draft-1')
   })
 
-  it('renderUnknownCallback возвращает BotResponse с кнопками', () => {
+  it('renderSourceDecisionButtons содержит кнопки merge и newfrom', () => {
+    const buttons = renderer.renderSourceDecisionButtons('draft-1')
+    expect(buttons).toHaveLength(2)
+    const flatData = buttons!.flat().map(b => b.data)
+    expect(flatData).toContain('draft:merge:draft-1')
+    expect(flatData).toContain('draft:newfrom:draft-1')
+  })
+
+  it('renderUnknownCallback возвращает BotResponse без кнопок', () => {
     const resp = renderer.renderUnknownCallback()
-    expect(resp.buttons?.flat().map(b => b.data)).toContain('new_recipe')
+    expect(resp.text).toContain('Не понял действие')
+    expect(resp.buttons).toBeUndefined()
   })
 })

@@ -1,5 +1,5 @@
 export type ImportStatus = 'pending' | 'processing' | 'done' | 'failed'
-export type SourceType = 'photo' | 'text' | 'url'
+export type SourceType = 'photo' | 'text' | 'url' | 'video'
 
 export interface ImportJobEntity {
   id: string
@@ -7,6 +7,7 @@ export interface ImportJobEntity {
   sourceType: SourceType
   rawInput: string
   recipeId: string | null
+  draftId: string | null
   error: string | null
   createdAt: Date
 }

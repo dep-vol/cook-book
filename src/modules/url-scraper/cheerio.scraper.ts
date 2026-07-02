@@ -11,6 +11,16 @@ const BODY_MIN_USEFUL = 300
 @injectable()
 export class CheerioScraper implements IUrlScraper {
   async scrape(url: string): Promise<ScrapeResult> {
+    // fetch не хранит куки между редиректами — cookie-wall'ы (VK autologin и т.п.)
+    // роняют его циклом редиректов, поэтому любой провал статики уводим в puppeteer
+    const staticResult = await this.scrapeStatic(url).catch(() => null)
+    if (staticResult && staticResult.text.length >= BODY_MIN_USEFUL) return staticResult
+
+    const rendered = await this.scrapeRendered(url)
+    return { text: rendered.text, imageUrl: rendered.imageUrl ?? staticResult?.imageUrl }
+  }
+
+  private async scrapeStatic(url: string): Promise<ScrapeResult> {
     const res = await fetch(url, { headers: { 'User-Agent': USER_AGENT } })
     if (!res.ok) throw new Error(`Failed to fetch ${url}: HTTP ${res.status}`)
 
@@ -20,10 +30,7 @@ export class CheerioScraper implements IUrlScraper {
 
     $('script, style, nav, footer, header, .related, .sidebar, .comments, #comments').remove()
     const bodyText = $('body').text().replace(/\s+/g, ' ').trim()
-    if (bodyText.length >= BODY_MIN_USEFUL) return { text: bodyText.slice(0, BODY_MAX_LENGTH), imageUrl }
-
-    const rendered = await this.scrapeRendered(url)
-    return { text: rendered.text, imageUrl: rendered.imageUrl ?? imageUrl }
+    return { text: bodyText.slice(0, BODY_MAX_LENGTH), imageUrl }
   }
 
   private async decodeResponse(res: Response): Promise<string> {

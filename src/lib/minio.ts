@@ -65,7 +65,6 @@ export async function uploadImage(buffer: Buffer, mimeType: string): Promise<str
 }
 
 export async function getImageUrl(key: string): Promise<string> {
-  // Presigned URL — работает 1 час, не требует публичного доступа к бакету
   const command = new GetObjectCommand({ Bucket: BUCKET, Key: key })
   return getSignedUrl(s3, command, { expiresIn: 3600 })
 }

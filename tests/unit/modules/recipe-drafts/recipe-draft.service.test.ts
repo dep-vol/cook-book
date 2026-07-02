@@ -23,6 +23,7 @@ const draft: RecipeDraftEntity = {
   coverImageKey: null,
   videoUrl: null,
   lastAiSuggestion: null,
+  pendingSource: null,
   recipeId: null,
   createdAt: new Date('2026-06-11T00:00:00.000Z'),
   updatedAt: new Date('2026-06-11T00:00:00.000Z'),
@@ -59,6 +60,7 @@ const mockRecipeService: IRecipeService = {
   create: vi.fn(),
   update: vi.fn(),
   delete: vi.fn(),
+  deleteSeveral: vi.fn(),
 }
 
 describe('RecipeDraftService', () => {
@@ -158,5 +160,30 @@ describe('RecipeDraftService', () => {
     })
     expect(mockRepo.markSaved).toHaveBeenCalledWith('draft-1', 'recipe-1')
     expect(recipe.id).toBe('recipe-1')
+  })
+
+  it('saveDraft lists missing fields in Russian when draft is incomplete', async () => {
+    vi.mocked(mockRepo.findById).mockResolvedValue({
+      ...draft,
+      title: null,
+      ingredients: [],
+      steps: [],
+    })
+
+    await expect(service.saveDraft('draft-1')).rejects.toThrow(
+      'Не хватает: название, ингредиенты, шаги приготовления'
+    )
+    expect(mockRecipeService.create).not.toHaveBeenCalled()
+  })
+
+  it('saveDraft lists only the specific missing field', async () => {
+    vi.mocked(mockRepo.findById).mockResolvedValue({
+      ...draft,
+      title: 'Борщ',
+      ingredients: [{ name: 'Свёкла', amount: '300', unit: 'г' }],
+      steps: [],
+    })
+
+    await expect(service.saveDraft('draft-1')).rejects.toThrow('Не хватает: шаги приготовления')
   })
 })

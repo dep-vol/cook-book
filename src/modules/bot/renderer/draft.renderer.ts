@@ -32,23 +32,21 @@ export class DraftRenderer {
 
   renderDraftMenuButtons(draftId: string): BotResponse['buttons'] {
     return [
-      [{ text: '🥕 Добавить ингредиент', data: `draft:add_ingredient:${draftId}` }],
-      [{ text: '📝 Добавить шаг', data: `draft:add_step:${draftId}` }],
-      [{ text: '📷 Прикрепить фото', data: `draft:add_photo:${draftId}` }],
-      [{ text: '🎬 Добавить видео-ссылку', data: `draft:add_video:${draftId}` }],
-      [{ text: '🤖 Спросить ИИ (свободный текст)', data: `draft:ask_ai:${draftId}` }],
-      [{ text: '💡 Заполнить недостающее', data: `draft:suggest_missing:${draftId}` }],
-      [{ text: '💾 Сохранить', data: `draft:save:${draftId}` }],
+      [{ text: '✅ Опубликовать', data: `draft:save:${draftId}` }],
+      [{ text: '🗑 Удалить черновик', data: `draft:discard:${draftId}` }],
+    ]
+  }
+
+  renderSourceDecisionButtons(draftId: string): BotResponse['buttons'] {
+    return [
+      [{ text: '➕ Дополнить текущий', data: `draft:merge:${draftId}` }],
+      [{ text: '🆕 Новый рецепт', data: `draft:newfrom:${draftId}` }],
     ]
   }
 
   renderUnknownCallback(): BotResponse {
     return {
-      text: 'Не понял действие. Можно создать новый рецепт или продолжить активный черновик.',
-      buttons: [
-        [{ text: 'Создать рецепт', data: 'new_recipe' }],
-        [{ text: 'Продолжить черновик', data: 'continue_draft' }],
-      ],
+      text: 'Не понял действие. Пришли текст, фото или ссылку — я распознаю рецепт.',
     }
   }
 }

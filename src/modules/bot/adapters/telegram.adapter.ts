@@ -19,7 +19,7 @@ export class TelegramAdapter implements IBotAdapter {
     })
   }
 
-  onText(handler: (text: string, context?: { channel: string; chatId: string; userId: string }, setStatus?: SetStatus) => Promise<string>): void {
+  onText(handler: (text: string, context?: { channel: string; chatId: string; userId: string }, setStatus?: SetStatus) => Promise<BotResponse>): void {
     this.bot.on('message:text', async ctx => {
       const statusMsg = await ctx.reply('⏳ Обрабатываю...')
       const chatId = String(ctx.chat.id)
@@ -31,7 +31,7 @@ export class TelegramAdapter implements IBotAdapter {
 
       try {
         const result = await handler(ctx.message.text, { channel: this.channel, chatId, userId }, setStatus)
-        await ctx.api.editMessageText(chatId, statusMsg.message_id, result)
+        await ctx.api.editMessageText(chatId, statusMsg.message_id, result.text, this.toReplyOptions(result))
       } catch (err) {
         await ctx.api.editMessageText(chatId, statusMsg.message_id, '❌ Внутренняя ошибка. Попробуй ещё раз.')
         console.error('Error in onText handler:', err)
@@ -39,7 +39,7 @@ export class TelegramAdapter implements IBotAdapter {
     })
   }
 
-  onPhoto(handler: (buffer: Buffer, mimeType: string, caption?: string, context?: { channel: string; chatId: string; userId: string }, setStatus?: SetStatus) => Promise<string>): void {
+  onPhoto(handler: (buffer: Buffer, mimeType: string, caption: string | undefined, context?: { channel: string; chatId: string; userId: string }, setStatus?: SetStatus) => Promise<BotResponse>): void {
     this.bot.on('message:photo', async ctx => {
       const statusMsg = await ctx.reply('⏳ Скачиваю фото...')
       const chatId = String(ctx.chat.id)
@@ -63,7 +63,7 @@ export class TelegramAdapter implements IBotAdapter {
 
         await setStatus('🤖 Анализирую фото...')
         const result = await handler(buffer, 'image/jpeg', caption, { channel: this.channel, chatId, userId }, setStatus)
-        await ctx.api.editMessageText(chatId, statusMsg.message_id, result)
+        await ctx.api.editMessageText(chatId, statusMsg.message_id, result.text, this.toReplyOptions(result))
       } catch (err) {
         await ctx.api.editMessageText(chatId, statusMsg.message_id, '❌ Внутренняя ошибка. Попробуй ещё раз.')
         console.error('Error in onPhoto handler:', err)
